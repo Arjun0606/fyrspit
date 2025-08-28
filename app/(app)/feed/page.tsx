@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { Flight } from '@/types';
 import { FlightCard } from '@/components/flight-card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -21,37 +20,19 @@ export default function FeedPage() {
       if (!user) return;
 
       try {
-        let feedQuery;
+        // Fetch flights via API
+        const response = await fetch('/api/flights?limit=20');
         
-        if (filter === 'friends') {
-          // TODO: Implement friends feed once follows are implemented
-          feedQuery = query(
-            collection(db, 'flights'),
-            where('visibility', '==', 'public'),
-            orderBy('createdAt', 'desc'),
-            limit(20)
-          );
-        } else {
-          feedQuery = query(
-            collection(db, 'flights'),
-            where('visibility', '==', 'public'),
-            orderBy('createdAt', 'desc'),
-            limit(20)
-          );
+        if (!response.ok) {
+          throw new Error('Failed to fetch feed');
         }
-
-        const querySnapshot = await getDocs(feedQuery);
-        const flightData: Flight[] = [];
         
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          flightData.push({
-            id: doc.id,
-            ...data,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            editedAt: data.editedAt?.toDate(),
-          } as Flight);
-        });
+        const data = await response.json();
+        const flightData: Flight[] = data.flights.map((flight: any) => ({
+          ...flight,
+          createdAt: new Date(flight.createdAt),
+          editedAt: flight.editedAt ? new Date(flight.editedAt) : undefined,
+        }));
 
         setFlights(flightData);
       } catch (error) {

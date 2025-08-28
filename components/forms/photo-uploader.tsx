@@ -28,16 +28,39 @@ export function PhotoUploader({ photos, onChange, maxPhotos = 6 }: PhotoUploader
       setUploading(prev => [...prev, uploadIndex]);
       
       try {
-        // In a real app, this would upload to Cloudinary
-        // For now, we'll create a local URL
-        const url = URL.createObjectURL(file);
+        // Get auth token
+        const auth = (await import('@/lib/firebase')).auth;
+        const user = auth.currentUser;
+        if (!user) {
+          throw new Error('Not authenticated');
+        }
         
-        // Simulate upload delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const token = await user.getIdToken();
         
-        onChange([...photos, url]);
+        // Create form data
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', 'flight-photos');
+        
+        // Upload to API
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Upload failed');
+        }
+        
+        const result = await response.json();
+        onChange([...photos, result.url]);
       } catch (error) {
         console.error('Upload failed:', error);
+        // You might want to show a toast notification here
       } finally {
         setUploading(prev => prev.filter(id => id !== uploadIndex));
       }

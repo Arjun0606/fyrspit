@@ -1,0 +1,179 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return request.auth.token.admin == true;
+    }
+    
+    function isValidUser() {
+      return isAuthenticated() && 
+             request.auth.uid == resource.data.id;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Anyone can read public user data
+      allow read: if true;
+      
+      // Users can create their own profile
+      allow create: if isAuthenticated() && 
+                   request.auth.uid == userId &&
+                   request.data.id == userId;
+      
+      // Users can update their own profile (but not roles/admin fields)
+      allow update: if isOwner(userId) && 
+                   !request.data.diff(resource.data).affectedKeys().hasAny(['roles', 'id']);
+      
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+    
+    // Flights collection
+    match /flights/{flightId} {
+      // Read flights based on visibility
+      allow read: if resource.data.visibility == 'public' ||
+                  (resource.data.visibility == 'friends' && 
+                   exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + resource.data.userId))) ||
+                  isOwner(resource.data.userId);
+      
+      // Users can create their own flights
+      allow create: if isAuthenticated() && 
+                   request.auth.uid == request.data.userId &&
+                   request.data.keys().hasAll(['fromIata', 'toIata', 'airlineCode', 'date', 'reviewShort']) &&
+                   request.data.visibility in ['public', 'friends', 'private'];
+      
+      // Users can update their own flights
+      allow update: if isOwner(resource.data.userId) &&
+                   request.data.userId == resource.data.userId;
+      
+      // Users can delete their own flights, admins can delete any
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+    
+    // Comments collection
+    match /comments/{commentId} {
+      // Anyone can read comments on public flights
+      allow read: if true;
+      
+      // Authenticated users can create comments
+      allow create: if isAuthenticated() && 
+                   request.auth.uid == request.data.userId &&
+                   exists(/databases/$(database)/documents/flights/$(request.data.flightId));
+      
+      // Users can update their own comments
+      allow update: if isOwner(resource.data.userId);
+      
+      // Users can delete their own comments, flight owners can delete comments on their flights
+      allow delete: if isOwner(resource.data.userId) || 
+                   isOwner(get(/databases/$(database)/documents/flights/$(resource.data.flightId)).data.userId) ||
+                   isAdmin();
+    }
+    
+    // Follows collection
+    match /follows/{followId} {
+      // Anyone can read follows
+      allow read: if true;
+      
+      // Users can follow others (followId format: follower_followee)
+      allow create: if isAuthenticated() && 
+                   request.auth.uid == request.data.followerId &&
+                   followId == request.data.followerId + '_' + request.data.followeeId &&
+                   request.data.followerId != request.data.followeeId;
+      
+      // Users can unfollow (delete their own follow relationships)
+      allow delete: if isAuthenticated() && 
+                   request.auth.uid == resource.data.followerId;
+    }
+    
+    // Likes collection
+    match /likes/{likeId} {
+      // Anyone can read likes
+      allow read: if true;
+      
+      // Users can like flights (likeId format: userId_flightId)
+      allow create: if isAuthenticated() && 
+                   request.auth.uid == request.data.userId &&
+                   likeId == request.data.userId + '_' + request.data.flightId &&
+                   exists(/databases/$(database)/documents/flights/$(request.data.flightId));
+      
+      // Users can unlike (delete their own likes)
+      allow delete: if isAuthenticated() && 
+                   request.auth.uid == resource.data.userId;
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if isOwner(resource.data.userId);
+      
+      // System/admins can create notifications
+      allow create: if isAdmin();
+      
+      // Users can update their own notifications (mark as read)
+      allow update: if isOwner(resource.data.userId) &&
+                   request.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      
+      // Users can delete their own notifications
+      allow delete: if isOwner(resource.data.userId);
+    }
+    
+    // Lists collection
+    match /lists/{listId} {
+      // Anyone can read public lists
+      allow read: if true;
+      
+      // Users can create their own lists
+      allow create: if isAuthenticated() && 
+                   request.auth.uid == request.data.userId;
+      
+      // Users can update their own lists
+      allow update: if isOwner(resource.data.userId);
+      
+      // Users can delete their own lists
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+    
+    // Reports collection
+    match /reports/{reportId} {
+      // Only admins can read reports
+      allow read: if isAdmin();
+      
+      // Authenticated users can create reports
+      allow create: if isAuthenticated() && 
+                   request.auth.uid == request.data.reporterId;
+      
+      // Only admins can update/delete reports
+      allow update, delete: if isAdmin();
+    }
+    
+    // Admin collections (badges, leaderboards, etc.)
+    match /badges/{badgeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /leaderboards/{leaderboardId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /airports/{airportId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /airlines/{airlineId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

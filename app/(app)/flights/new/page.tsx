@@ -27,15 +27,40 @@ export default function NewFlightPage() {
   const handleSubmit = async (data: CreateFlightData) => {
     setIsSubmitting(true);
     try {
-      // TODO: Implement flight creation API call
-      console.log('Creating flight:', data);
+      // Get auth token
+      const { auth } = await import('@/lib/firebase');
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('Not authenticated');
+      }
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const token = await user.getIdToken();
       
-      router.push('/feed');
-    } catch (error) {
+      // Create flight via API
+      const response = await fetch('/api/flights', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create flight');
+      }
+      
+      const result = await response.json();
+      
+      // Show success and redirect
+      const { toast } = await import('react-hot-toast');
+      toast.success('Flight logged successfully!');
+      router.push(`/flights/${result.flightId}`);
+    } catch (error: any) {
       console.error('Error creating flight:', error);
+      const { toast } = await import('react-hot-toast');
+      toast.error(error.message || 'Failed to create flight');
     } finally {
       setIsSubmitting(false);
     }
