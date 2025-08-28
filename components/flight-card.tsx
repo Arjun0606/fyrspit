@@ -27,9 +27,43 @@ export function FlightCard({ flight, showUserInfo = true }: FlightCardProps) {
   const [likesCount, setLikesCount] = useState(0);
 
   const handleLike = async () => {
-    // TODO: Implement like functionality
-    setIsLiked(!isLiked);
-    setLikesCount(prev => isLiked ? prev - 1 : prev + 1);
+    try {
+      const { auth } = await import('@/lib/firebase');
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const token = await user.getIdToken();
+      
+      if (isLiked) {
+        // Unlike
+        const response = await fetch(`/api/flights/${flight.id}/unlike`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (response.ok) {
+          setIsLiked(false);
+          setLikesCount(prev => prev - 1);
+        }
+      } else {
+        // Like
+        const response = await fetch(`/api/flights/${flight.id}/like`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (response.ok) {
+          setIsLiked(true);
+          setLikesCount(prev => prev + 1);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
   };
 
   const handleShare = async () => {

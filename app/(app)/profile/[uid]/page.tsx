@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { User, Flight } from '@/types';
@@ -48,29 +48,17 @@ export default function ProfilePage() {
           } as User);
         }
 
-        // Fetch user's flights
-        const flightsQuery = query(
-          collection(db, 'flights'),
-          where('userId', '==', uid),
-          where('visibility', '==', 'public'),
-          orderBy('createdAt', 'desc'),
-          limit(20)
-        );
-
-        const flightsSnapshot = await getDocs(flightsQuery);
-        const flightData: Flight[] = [];
-        
-        flightsSnapshot.forEach((doc) => {
-          const data = doc.data();
-          flightData.push({
-            id: doc.id,
-            ...data,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            editedAt: data.editedAt?.toDate(),
-          } as Flight);
-        });
-
-        setFlights(flightData);
+        // Fetch user's flights via API
+        const flightsResponse = await fetch(`/api/flights?userId=${uid}&limit=20`);
+        if (flightsResponse.ok) {
+          const flightsData = await flightsResponse.json();
+          const flightData: Flight[] = flightsData.flights.map((flight: any) => ({
+            ...flight,
+            createdAt: new Date(flight.createdAt),
+            editedAt: flight.editedAt ? new Date(flight.editedAt) : undefined,
+          }));
+          setFlights(flightData);
+        }
       } catch (error) {
         console.error('Error fetching profile:', error);
       } finally {
