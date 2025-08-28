@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ToastProvider } from '@/components/providers/toast-provider'
+import { PWAInstallPrompt } from '@/components/pwa-install-prompt'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -46,6 +47,24 @@ export default function RootLayout({
       <body className={`${inter.className} bg-gray-950 text-white min-h-screen`}>
         {children}
         <ToastProvider />
+        <PWAInstallPrompt />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                      console.log('SW registered: ', registration);
+                    })
+                    .catch(function(registrationError) {
+                      console.log('SW registration failed: ', registrationError);
+                    });
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   )
