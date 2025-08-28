@@ -8,6 +8,7 @@ import { AirlineAutocomplete } from '@/components/forms/airline-autocomplete';
 import { RatingStars } from '@/components/forms/rating-stars';
 import { PhotoUploader } from '@/components/forms/photo-uploader';
 import { TagInput } from '@/components/forms/tag-input';
+import { toast } from 'react-hot-toast';
 import { 
   Plane, 
   Calendar, 
@@ -19,7 +20,9 @@ import {
   Eye, 
   EyeOff, 
   Users, 
-  Lock 
+  Lock,
+  Zap,
+  Loader2
 } from 'lucide-react';
 
 interface FlightComposerProps {
@@ -31,8 +34,127 @@ interface FlightComposerProps {
 export function FlightComposer({ form, onSubmit, isSubmitting }: FlightComposerProps) {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = form;
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [isEnriching, setIsEnriching] = useState(false);
 
   const watchedValues = watch();
+
+  // Auto-enrich flight data when flight number changes
+  const handleFlightNumberEnrichment = async (flightNumber: string) => {
+    if (!flightNumber || flightNumber.length < 3) return;
+    
+    setIsEnriching(true);
+    try {
+      const response = await fetch('/api/flights/enrich', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          flightNumber,
+          date: watchedValues.date 
+        }),
+      });
+      
+      if (response.ok) {
+        const { data } = await response.json();
+        
+        // Get comprehensive flight intelligence
+        const intelligenceResponse = await fetch('/api/flights/intelligence', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            flightNumber,
+            date: watchedValues.date 
+          }),
+        });
+        
+        if (intelligenceResponse.ok) {
+          const intelligenceData = await intelligenceResponse.json();
+          const flightIntel = intelligenceData.data;
+          
+          // Auto-fill route info
+          if (flightIntel.route) {
+            setValue('fromIata', flightIntel.route.from.iata);
+            setValue('toIata', flightIntel.route.to.iata);
+            
+            toast.success(`Route: ${flightIntel.route.from.city} → ${flightIntel.route.to.city}`, {
+              icon: '🛫',
+              duration: 3000,
+            });
+            
+            const hours = Math.floor(flightIntel.route.duration / 60);
+            const minutes = flightIntel.route.duration % 60;
+            toast.success(`${flightIntel.route.distance} miles, ${hours}h ${minutes}m`, {
+              icon: '📏',
+              duration: 2500,
+            });
+          }
+          
+          // Auto-fill aircraft info
+          if (flightIntel.aircraft?.type) {
+            setValue('aircraftCode', flightIntel.aircraft.type);
+            toast.success(`Aircraft: ${flightIntel.aircraft.manufacturer} ${flightIntel.aircraft.type}`, {
+              icon: '✈️',
+              duration: 3000,
+            });
+            
+            toast.success(`Capacity: ${flightIntel.aircraft.capacity.total} passengers`, {
+              icon: '👥',
+              duration: 2000,
+            });
+          }
+          
+          // Auto-fill airline info
+          if (flightIntel.airline?.name) {
+            setValue('airlineCode', flightIntel.airline.code);
+            toast.success(`Airline: ${flightIntel.airline.name} (${flightIntel.airline.reputation.toFixed(1)}/10)`, {
+              icon: '🏢',
+              duration: 3000,
+            });
+          }
+          
+          // Show experience insights
+          if (flightIntel.experience?.highlights?.length > 0) {
+            toast.success(`💡 ${flightIntel.experience.highlights[0]}`, {
+              duration: 4000,
+            });
+          }
+          
+          // Show social insights
+          if (flightIntel.social?.insights?.length > 0) {
+            toast.success(`👥 ${flightIntel.social.insights[0]}`, {
+              duration: 4000,
+            });
+          }
+        }
+        
+        // Show real-time status if available
+        if (data.realtime?.status) {
+          const statusEmoji = {
+            'scheduled': '⏱️',
+            'departed': '🛫',
+            'airborne': '✈️',
+            'landed': '🛬',
+            'cancelled': '❌'
+          }[data.realtime.status];
+          
+          toast.success(`Flight status: ${statusEmoji} ${data.realtime.status}`, {
+            duration: 4000,
+          });
+        }
+        
+        // Show live position if airborne
+        if (data.realtime?.position && data.realtime.status === 'airborne') {
+          toast.success(`Flight is airborne at ${Math.round(data.realtime.position.altitude || 0)}ft`, {
+            icon: '🌤️',
+            duration: 5000,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Enrichment error:', error);
+    } finally {
+      setIsEnriching(false);
+    }
+  };
 
   const visibilityOptions: { value: Visibility; label: string; icon: React.ReactNode; description: string }[] = [
     { 
@@ -128,12 +250,26 @@ export function FlightComposer({ form, onSubmit, isSubmitting }: FlightComposerP
             <label className="block text-sm font-medium text-gray-300 mb-1">
               Flight Number
             </label>
-            <input
-              {...register('flightNumber')}
-              type="text"
-              className="input w-full"
-              placeholder="e.g. 1234"
-            />
+            <div className="relative">
+              <input
+                {...register('flightNumber')}
+                type="text"
+                className="input w-full pr-12"
+                placeholder="e.g. AA123, BA456"
+                onBlur={(e) => handleFlightNumberEnrichment(e.target.value)}
+              />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                {isEnriching ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-teal-500" />
+                ) : (
+                  <Zap className="h-4 w-4 text-gray-500" />
+                )}
+              </div>
+            </div>
+            <p className="mt-1 text-xs text-gray-400 flex items-center">
+              <Zap className="h-3 w-3 mr-1" />
+              Auto-enrichment powered by OpenSky Network
+            </p>
           </div>
         </div>
 

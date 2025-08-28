@@ -4,7 +4,11 @@ import './globals.css'
 import { ToastProvider } from '@/components/providers/toast-provider'
 import { PWAInstallPrompt } from '@/components/pwa-install-prompt'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter'
+})
 
 export const metadata: Metadata = {
   title: 'Fyrspit - The Social Diary for Flying',
@@ -25,8 +29,6 @@ export const metadata: Metadata = {
     description: 'Log flights. Tell your story. Discover the culture of flying.',
   },
   manifest: '/manifest.json',
-  themeColor: '#0B0B0B',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
 }
 
 export default function RootLayout({
@@ -51,17 +53,25 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if ('serviceWorker' in navigator) {
+              (function() {
+                if (!('serviceWorker' in navigator)) return;
+                // In development or on localhost, ensure no SW is controlling the page
+                var isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
+                if (isLocal) {
+                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    registrations.forEach(function(reg) { reg.unregister(); });
+                  });
+                  if ('caches' in window) {
+                    caches.keys().then(function(keys) { keys.forEach(function(k){ caches.delete(k); }); });
+                  }
+                  return; // Do not register SW in dev
+                }
+                // In production, register the SW
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                      console.log('SW registered: ', registration);
-                    })
-                    .catch(function(registrationError) {
-                      console.log('SW registration failed: ', registrationError);
-                    });
+                    .catch(function(err){ console.log('SW registration failed:', err); });
                 });
-              }
+              })();
             `,
           }}
         />

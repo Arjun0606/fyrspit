@@ -7,6 +7,7 @@ import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, up
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Plane, Eye, EyeOff } from 'lucide-react';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { User } from '@/types';
 
@@ -121,9 +122,15 @@ export default function SignupPage() {
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center space-x-2 mb-6">
-            <Plane className="h-8 w-8 text-teal-500" />
-            <span className="text-2xl font-bold">Fyrspit</span>
+          <Link href="/" className="inline-flex items-center space-x-3 mb-6">
+            <Image 
+              src="/fyrspit-logo.png" 
+              alt="Fyrspit" 
+              width={48} 
+              height={48} 
+              className="rounded-xl shadow-lg"
+            />
+            <span className="text-3xl font-bold text-white">Fyrspit</span>
           </Link>
           <h1 className="text-3xl font-bold mb-2">Join Fyrspit</h1>
           <p className="text-gray-400">Start your flying journey today</p>

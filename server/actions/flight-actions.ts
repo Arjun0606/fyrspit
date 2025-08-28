@@ -6,6 +6,8 @@ import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { CreateFlightData, Flight } from '@/types';
 import { calculateDistance, estimateFlightHours, getTimeOfDay, calculateXP, generateId, getContinent } from '@/lib/utils';
 import { uploadImage } from '@/lib/cloudinary';
+import { AirportDatabase } from '@/lib/airport-database';
+import { AchievementEngine, UserStats } from '@/lib/achievements';
 
 // Mock airport data - in production this would come from a real database
 const mockAirports = {
@@ -16,6 +18,10 @@ const mockAirports = {
   'NRT': { lat: 35.7647, lon: 140.3864, city: 'Tokyo', country: 'Japan', countryCode: 'JP' },
   'SIN': { lat: 1.3644, lon: 103.9915, city: 'Singapore', country: 'Singapore', countryCode: 'SG' },
   'DXB': { lat: 25.2532, lon: 55.3657, city: 'Dubai', country: 'United Arab Emirates', countryCode: 'AE' },
+  // Add Indian airports
+  'BOM': { lat: 19.0896, lon: 72.8656, city: 'Mumbai', country: 'India', countryCode: 'IN' },
+  'BLR': { lat: 13.1989, lon: 77.7068, city: 'Bengaluru', country: 'India', countryCode: 'IN' },
+  'DEL': { lat: 28.5665, lon: 77.1031, city: 'New Delhi', country: 'India', countryCode: 'IN' },
 };
 
 export async function createFlight(data: CreateFlightData, authToken: string) {
@@ -250,4 +256,168 @@ export async function deleteFlight(flightId: string, authToken: string) {
     console.error('Error deleting flight:', error);
     throw new Error('Failed to delete flight');
   }
+}
+
+/**
+ * Advanced gamification stats update
+ * Calculates achievements, XP, levels, and comprehensive statistics
+ */
+async function updateAdvancedUserStats(
+  userId: string, 
+  flightData: CreateFlightData,
+  calculatedData: {
+    distance: number;
+    estimatedHours: number;
+    xpEarned: number;
+    continent: string;
+    timeOfDay: string;
+  }
+) {
+  const userRef = adminDb.collection('users').doc(userId);
+  
+  await adminDb.runTransaction(async (transaction) => {
+    const userDoc = await transaction.get(userRef);
+    const userData = userDoc.data();
+    
+    if (!userData) {
+      throw new Error('User not found');
+    }
+
+    // Get current comprehensive stats
+    const currentStats: UserStats = userData.gameStats || {
+      totalFlights: 0,
+      totalMiles: 0,
+      totalHours: 0,
+      totalXP: 0,
+      level: 1,
+      countriesVisited: [],
+      continentsVisited: [],
+      citiesVisited: [],
+      airportsVisited: [],
+      aircraftTypes: [],
+      manufacturers: [],
+      engineTypes: [],
+      cabinClasses: [],
+      airlinesFlown: [],
+      favoriteAirline: '',
+      loyaltyStatus: {},
+      shortHaulFlights: 0,
+      mediumHaulFlights: 0,
+      longHaulFlights: 0,
+      domesticFlights: 0,
+      internationalFlights: 0,
+      averageFlightTime: 0,
+      longestFlight: 0,
+      shortestFlight: 999999,
+      friendsCount: 0,
+      globalRank: 0,
+      friendsRank: 0,
+    };
+
+    // Get airport information
+    const fromAirport = AirportDatabase.findByIata(flightData.fromIata);
+    const toAirport = AirportDatabase.findByIata(flightData.toIata);
+
+    // Update basic counters
+    const newStats: UserStats = {
+      ...currentStats,
+      totalFlights: currentStats.totalFlights + 1,
+      totalMiles: currentStats.totalMiles + calculatedData.distance,
+      totalHours: currentStats.totalHours + calculatedData.estimatedHours,
+      totalXP: currentStats.totalXP + calculatedData.xpEarned,
+      level: AchievementEngine.calculateLevel(currentStats.totalXP + calculatedData.xpEarned),
+    };
+
+    // Update geographic stats
+    if (fromAirport && toAirport) {
+      // Countries
+      const countries = new Set([...currentStats.countriesVisited, fromAirport.country, toAirport.country]);
+      newStats.countriesVisited = Array.from(countries);
+
+      // Continents  
+      const continents = new Set([...currentStats.continentsVisited, fromAirport.continent, toAirport.continent]);
+      newStats.continentsVisited = Array.from(continents);
+
+      // Cities
+      const cities = new Set([...currentStats.citiesVisited, fromAirport.city, toAirport.city]);
+      newStats.citiesVisited = Array.from(cities);
+
+      // Check if domestic or international
+      if (fromAirport.country === toAirport.country) {
+        newStats.domesticFlights = currentStats.domesticFlights + 1;
+      } else {
+        newStats.internationalFlights = currentStats.internationalFlights + 1;
+      }
+    }
+
+    // Update airports
+    const airports = new Set([...currentStats.airportsVisited, flightData.fromIata, flightData.toIata]);
+    newStats.airportsVisited = Array.from(airports);
+
+    // Update airlines
+    const airlines = new Set([...currentStats.airlinesFlown, flightData.airlineCode]);
+    newStats.airlinesFlown = Array.from(airlines);
+
+    // Update aircraft if provided
+    if (flightData.aircraftCode) {
+      const aircraft = new Set([...currentStats.aircraftTypes, flightData.aircraftCode]);
+      newStats.aircraftTypes = Array.from(aircraft);
+    }
+
+    // Update cabin classes
+    const cabinClasses = new Set([...currentStats.cabinClasses, flightData.cabinClass]);
+    newStats.cabinClasses = Array.from(cabinClasses);
+
+    // Flight duration categorization
+    if (calculatedData.estimatedHours < 3) {
+      newStats.shortHaulFlights = currentStats.shortHaulFlights + 1;
+    } else if (calculatedData.estimatedHours < 6) {
+      newStats.mediumHaulFlights = currentStats.mediumHaulFlights + 1;
+    } else {
+      newStats.longHaulFlights = currentStats.longHaulFlights + 1;
+    }
+
+    // Update longest/shortest flights
+    newStats.longestFlight = Math.max(currentStats.longestFlight, calculatedData.distance);
+    newStats.shortestFlight = Math.min(currentStats.shortestFlight, calculatedData.distance);
+
+    // Calculate average flight time
+    newStats.averageFlightTime = newStats.totalHours / newStats.totalFlights;
+
+    // Find favorite airline (most flown)
+    const airlineCounts = newStats.airlinesFlown.reduce((acc, airline) => {
+      // This would need actual flight data to count properly
+      acc[airline] = (acc[airline] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const favoriteAirline = Object.entries(airlineCounts).reduce((a, b) => 
+      airlineCounts[a[0]] > airlineCounts[b[0]] ? a : b
+    );
+    newStats.favoriteAirline = favoriteAirline?.[0] || '';
+
+    // Check for new achievements
+    const newAchievements = AchievementEngine.checkAchievements(newStats);
+    
+    // Add XP for achievements
+    const achievementXP = newAchievements.reduce((total, achievement) => total + achievement.xp, 0);
+    newStats.totalXP += achievementXP;
+    newStats.level = AchievementEngine.calculateLevel(newStats.totalXP);
+
+    // Update user document
+    transaction.update(userRef, {
+      gameStats: newStats,
+      achievements: newAchievements.map(a => ({
+        id: a.id,
+        unlockedAt: a.unlockedAt,
+        xpEarned: a.xp
+      })),
+      lastFlightDate: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // TODO: Update global leaderboards
+    // TODO: Notify friends of achievements
+    // TODO: Calculate badges and progress
+  });
 }
