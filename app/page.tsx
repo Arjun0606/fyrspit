@@ -50,13 +50,10 @@ export default function HomePage() {
             Compare stats with friends. Build your flying legacy.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+          <div className="flex justify-center mb-16">
             <Link href="/signup" className="btn-cta group">
               Start Your Journey
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link href="/login" className="btn-secondary">
-              Watch Demo
             </Link>
           </div>
 
