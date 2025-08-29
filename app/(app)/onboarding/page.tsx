@@ -168,27 +168,27 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center space-x-3 mb-6">
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
             <Image 
               src="/fyrspit-logo.png" 
               alt="Fyrspit" 
-              width={48} 
-              height={48} 
-              className="rounded-xl shadow-lg"
+              width={40} 
+              height={40} 
+              className="rounded-lg sm:rounded-xl shadow-lg sm:w-12 sm:h-12"
             />
-            <span className="text-3xl font-bold text-white">Fyrspit</span>
+            <span className="text-2xl sm:text-3xl font-bold text-white">Fyrspit</span>
           </div>
-          <h1 className="text-4xl font-bold mb-4 text-white">Welcome aboard, {user?.displayName}! ✈️</h1>
-          <p className="text-xl text-gray-300">Let's personalize your aviation experience</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 text-white">Welcome aboard, {user?.displayName}! ✈️</h1>
+          <p className="text-base sm:text-lg lg:text-xl text-gray-300 px-4">Let's personalize your aviation experience</p>
           
           {/* Progress Bar */}
-          <div className="max-w-md mx-auto mt-8">
+          <div className="max-w-sm sm:max-w-md mx-auto mt-6 sm:mt-8 px-4">
             <div className="flex justify-between mb-2">
-              <span className="text-sm text-gray-400">Step {step} of 6</span>
-              <span className="text-sm text-gray-400">{Math.round((step / 6) * 100)}%</span>
+              <span className="text-xs sm:text-sm text-gray-400">Step {step} of 6</span>
+              <span className="text-xs sm:text-sm text-gray-400">{Math.round((step / 6) * 100)}%</span>
             </div>
             <div className="w-full bg-gray-700 rounded-full h-2">
               <div 
@@ -199,24 +199,24 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto px-2 sm:px-0">
           {/* Step 1: Username & Basic Info */}
           {step === 1 && (
-            <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-700 rounded-2xl p-8 shadow-2xl">
-              <div className="text-center mb-8">
-                <User className="h-16 w-16 text-orange-500 mx-auto mb-4" />
-                <h2 className="text-3xl font-bold text-white mb-4">Create your unique identity</h2>
-                <p className="text-gray-300">Choose a username that others can find you by</p>
+            <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-700 rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-2xl">
+              <div className="text-center mb-6 sm:mb-8">
+                <User className="h-12 w-12 sm:h-16 sm:w-16 text-orange-500 mx-auto mb-3 sm:mb-4" />
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-3 sm:mb-4">Create your unique identity</h2>
+                <p className="text-gray-300 text-sm sm:text-base">Choose a username that others can find you by</p>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Username *</label>
                   <div className="relative">
                     <input
                       type="text"
                       placeholder="e.g., pilot_arjun, sky_explorer, aviation_pro"
-                      className={`w-full px-6 py-4 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 text-lg ${
+                      className={`w-full px-4 sm:px-6 py-3 sm:py-4 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 text-base sm:text-lg ${
                         data.username.length >= 3 
                           ? usernameAvailable === true 
                             ? 'border-green-500 focus:ring-green-500' 
@@ -274,14 +274,14 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Date of Birth</label>
                     <input
                       type="date"
                       max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
                       min={new Date(new Date().setFullYear(new Date().getFullYear() - 120)).toISOString().split('T')[0]}
-                      className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
                       value={data.dateOfBirth}
                       onChange={(e) => setData({...data, dateOfBirth: e.target.value})}
                     />
@@ -292,7 +292,7 @@ export default function OnboardingPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Gender</label>
                     <select
-                      className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
                       value={data.gender}
                       onChange={(e) => setData({...data, gender: e.target.value})}
                     >
