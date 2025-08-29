@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SmartFlightEngine } from '@/lib/smart-flight-engine';
+import LiveFlightAPI from '@/lib/live-flight-api';
 import { AircraftAchievementEngine } from '@/lib/aircraft-achievements';
 
 export async function POST(req: NextRequest) {
@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
 
     console.log(`🔍 Looking up flight: ${flightNumber}`);
 
-    // Use our smart flight engine for AI-like generation
-    const flightData = SmartFlightEngine.generateFlightData(flightNumber);
+    // Get REAL-TIME flight data from live APIs
+    const flightData = await LiveFlightAPI.getRealtimeFlightData(flightNumber);
 
     if (!flightData) {
       return NextResponse.json(
@@ -51,12 +51,8 @@ export async function POST(req: NextRequest) {
       stats.xpEarned += aircraftAchievement.xp;
     }
 
-    // Add manufacturer bonus
-    const manufacturerBonus = AircraftAchievementEngine.getManufacturerBonus(flightData.aircraft.manufacturer);
-    stats.xpEarned += manufacturerBonus;
-
     // Add route-based achievements
-    if (flightData.route.distance > 3000) {
+    if (flightData.route.distance && flightData.route.distance > 3000) {
       stats.achievements.push({
         id: 'long_haul',
         name: 'Long Haul Warrior',
@@ -67,7 +63,7 @@ export async function POST(req: NextRequest) {
     }
 
     // International flight achievement
-    if (flightData.route.from.country !== flightData.route.to.country) {
+    if (flightData.route.departure.country !== flightData.route.arrival.country) {
       stats.achievements.push({
         id: 'border_crosser',
         name: 'Border Crosser',
