@@ -39,33 +39,33 @@ export default function HomePage() {
             <span className="text-teal-400 text-sm font-medium">Enter any flight number → Get EVERYTHING</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            The Social Diary
-            <br />
-            <span className="gradient-text">for Flying</span>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-6 leading-tight px-4">
+            <span className="block">The Social</span>
+            <span className="block">Diary</span>
+            <span className="gradient-text block">for Flying</span>
           </h1>
           
-          <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed px-6">
             Like Letterboxd for aviation. Enter flight numbers → Get aircraft specs, route data, and unlock achievements. 
             Compare stats with friends. Build your flying legacy.
           </p>
 
-          <div className="flex justify-center mb-16">
-            <Link href="/signup" className="btn-cta group">
+          <div className="flex justify-center mb-16 px-4">
+            <Link href="/signup" className="btn-cta group w-full sm:w-auto text-center">
               Start Your Journey
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
           {/* Live Demo */}
-          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8 max-w-2xl mx-auto">
-            <p className="text-gray-400 mb-4">Try it now: Enter any flight number</p>
-            <div className="bg-gray-800 rounded-lg p-4 text-left font-mono text-sm">
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-4 sm:p-8 mx-4 sm:mx-auto max-w-2xl">
+            <p className="text-gray-400 mb-4 text-center sm:text-left">Try it now: Enter any flight number</p>
+            <div className="bg-gray-800 rounded-lg p-4 text-left font-mono text-xs sm:text-sm overflow-x-auto">
               <div className="text-gray-500">$ flight QP1457</div>
-              <div className="mt-2 text-green-400">
-                ✈️ Boeing 737 MAX 8 (Boeing)<br/>
-                🛫 Mumbai → Bangalore (537 miles)<br/>
-                ⏱️ 1h 25m flight time<br/>
+              <div className="mt-2 text-green-400 whitespace-pre-wrap">
+                ✈️ Boeing 737 MAX 8 (Boeing)
+                🛫 Mumbai → Bangalore (537 miles)
+                ⏱️ 1h 25m flight time
                 🏆 +50 XP earned
               </div>
             </div>

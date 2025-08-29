@@ -2,7 +2,7 @@
   "name": "Fyrspit - The Social Diary for Flying",
   "short_name": "Fyrspit",
   "description": "Log flights. Tell your story. Discover the culture of flying.",
-  "start_url": "/feed",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0B0B0B",
   "theme_color": "#0B0B0B",
