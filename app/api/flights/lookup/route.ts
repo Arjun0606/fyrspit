@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleFlightsScraper } from '@/lib/google-flights-scraper';
+import { RealFlightAPI } from '@/lib/real-flight-api';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,8 +12,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get real-time flight data from Google
-    const flightData = await GoogleFlightsScraper.scrapeFlightData(flightNumber);
+    // Get REAL flight data from multiple APIs
+    const flightData = await RealFlightAPI.getFlightData(flightNumber);
 
     if (!flightData) {
       return NextResponse.json(
@@ -29,13 +29,19 @@ export async function POST(req: NextRequest) {
       milestones: []
     };
 
+    // Calculate distance if not provided
+    if (!flightData.route.distance && flightData.route.departure.iata !== 'UNK' && flightData.route.arrival.iata !== 'UNK') {
+      // Use airport coordinates to calculate distance (implement later)
+      flightData.route.distance = 500; // Default estimate
+    }
+
     // Add distance-based XP
     if (flightData.route.distance) {
       stats.xpEarned += Math.floor(flightData.route.distance / 100); // 1 XP per 100 miles
     }
 
     // Add aircraft-based achievements
-    if (flightData.aircraft.type.includes('A380')) {
+    if (flightData.aircraft.type.toLowerCase().includes('a380')) {
       stats.achievements.push({
         id: 'superjumbo',
         name: 'Superjumbo Explorer',
@@ -43,6 +49,17 @@ export async function POST(req: NextRequest) {
         xp: 100
       });
       stats.xpEarned += 100;
+    }
+
+    // Boeing 737 achievement
+    if (flightData.aircraft.type.toLowerCase().includes('737')) {
+      stats.achievements.push({
+        id: 'workhorse',
+        name: 'Workhorse Rider',
+        description: 'Flew on the world\'s most popular aircraft',
+        xp: 25
+      });
+      stats.xpEarned += 25;
     }
 
     // Add route-based achievements
@@ -54,6 +71,17 @@ export async function POST(req: NextRequest) {
         xp: 150
       });
       stats.xpEarned += 150;
+    }
+
+    // International flight achievement
+    if (flightData.route.departure.country !== flightData.route.arrival.country) {
+      stats.achievements.push({
+        id: 'border_crosser',
+        name: 'Border Crosser',
+        description: 'Completed an international flight',
+        xp: 75
+      });
+      stats.xpEarned += 75;
     }
 
     return NextResponse.json({

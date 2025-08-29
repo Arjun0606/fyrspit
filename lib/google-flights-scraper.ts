@@ -65,7 +65,7 @@ export class GoogleFlightsScraper {
       await page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 10000 });
       
       // Wait for potential flight card to load
-      await page.waitForTimeout(2000);
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Extract flight data from the page
       const scrapedData = await page.evaluate(() => {
