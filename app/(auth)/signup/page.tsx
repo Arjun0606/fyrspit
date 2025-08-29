@@ -118,27 +118,27 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 p-4">
       <div className="max-w-md w-full">
         {/* Header */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center space-x-3 mb-6">
+        <div className="text-center mb-6 sm:mb-8">
+          <Link href="/" className="inline-flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
             <Image 
               src="/fyrspit-logo.png" 
               alt="Fyrspit" 
-              width={48} 
-              height={48} 
-              className="rounded-xl shadow-lg"
+              width={40} 
+              height={40} 
+              className="rounded-lg sm:rounded-xl shadow-lg sm:w-12 sm:h-12"
             />
-            <span className="text-3xl font-bold text-white">Fyrspit</span>
+            <span className="text-2xl sm:text-3xl font-bold text-white">Fyrspit</span>
           </Link>
-          <h1 className="text-3xl font-bold mb-2">Join Fyrspit</h1>
-          <p className="text-gray-400">Start your flying journey today</p>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-white">Join Fyrspit</h1>
+          <p className="text-gray-400 text-sm sm:text-base">Start your flying journey today</p>
         </div>
 
         {/* Signup Form */}
-        <div className="card">
-          <form onSubmit={handleEmailSignup} className="space-y-4">
+        <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-700 rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-2xl">
+          <form onSubmit={handleEmailSignup} className="space-y-4 sm:space-y-5">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
                 Full Name
@@ -149,7 +149,7 @@ export default function SignupPage() {
                 type="text"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="input w-full"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm sm:text-base"
                 placeholder="Enter your full name"
                 required
               />
@@ -165,7 +165,7 @@ export default function SignupPage() {
                 type="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="input w-full"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm sm:text-base"
                 placeholder="Enter your email"
                 required
               />
@@ -182,7 +182,7 @@ export default function SignupPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="input w-full pr-10"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="Create a password"
                   required
                 />
@@ -207,7 +207,7 @@ export default function SignupPage() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className="input w-full pr-10"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="Confirm your password"
                   required
                 />
@@ -238,7 +238,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="btn-primary w-full"
+              className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-gray-900 font-bold py-3 sm:py-4 px-6 rounded-lg hover:from-orange-600 hover:to-yellow-600 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg text-sm sm:text-base"
             >
               {isLoading ? 'Creating account...' : 'Create Account'}
             </button>
@@ -257,7 +257,7 @@ export default function SignupPage() {
             <button
               onClick={handleGoogleSignup}
               disabled={isLoading}
-              className="mt-4 w-full btn-secondary flex items-center justify-center space-x-2"
+              className="mt-4 w-full bg-white text-gray-900 font-semibold py-3 sm:py-4 px-6 rounded-lg hover:bg-gray-100 transition-all transform hover:scale-105 disabled:opacity-50 flex items-center justify-center space-x-2 shadow-lg text-sm sm:text-base"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path

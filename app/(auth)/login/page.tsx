@@ -49,27 +49,27 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 p-4">
       <div className="max-w-md w-full">
         {/* Header */}
-        <div className="text-center mb-8">
-                        <Link href="/" className="inline-flex items-center space-x-3 mb-8">
-                <Image 
-                  src="/fyrspit-logo.png" 
-                  alt="Fyrspit" 
-                  width={48} 
-                  height={48} 
-                  className="rounded-xl shadow-lg"
-                />
-                <span className="text-3xl font-bold text-white">Fyrspit</span>
-              </Link>
-          <h1 className="text-4xl font-bold mb-3 text-white">Welcome back</h1>
-          <p className="text-gray-400 text-lg">Sign in to continue your flying journey</p>
+        <div className="text-center mb-6 sm:mb-8">
+          <Link href="/" className="inline-flex items-center space-x-2 sm:space-x-3 mb-6 sm:mb-8">
+            <Image 
+              src="/fyrspit-logo.png" 
+              alt="Fyrspit" 
+              width={40} 
+              height={40} 
+              className="rounded-lg sm:rounded-xl shadow-lg sm:w-12 sm:h-12"
+            />
+            <span className="text-2xl sm:text-3xl font-bold text-white">Fyrspit</span>
+          </Link>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-white">Welcome back</h1>
+          <p className="text-gray-400 text-base sm:text-lg">Sign in to continue your flying journey</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-700 rounded-2xl p-8 shadow-2xl">
-          <form onSubmit={handleEmailLogin} className="space-y-6">
+        <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-700 rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-2xl">
+          <form onSubmit={handleEmailLogin} className="space-y-4 sm:space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                 Email
@@ -122,7 +122,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-gray-900 font-bold py-4 px-6 rounded-lg hover:from-orange-600 hover:to-yellow-600 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-gray-900 font-bold py-3 sm:py-4 px-6 rounded-lg hover:from-orange-600 hover:to-yellow-600 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg text-sm sm:text-base"
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
@@ -141,9 +141,9 @@ export default function LoginPage() {
             <button
               onClick={handleGoogleLogin}
               disabled={isLoading}
-              className="mt-6 w-full bg-white text-gray-900 font-semibold py-4 px-6 rounded-lg hover:bg-gray-100 transition-all transform hover:scale-105 disabled:opacity-50 flex items-center justify-center space-x-3 shadow-lg"
+              className="mt-4 sm:mt-6 w-full bg-white text-gray-900 font-semibold py-3 sm:py-4 px-6 rounded-lg hover:bg-gray-100 transition-all transform hover:scale-105 disabled:opacity-50 flex items-center justify-center space-x-2 sm:space-x-3 shadow-lg text-sm sm:text-base"
             >
-              <div className="h-6 w-6 bg-gradient-to-br from-blue-500 to-red-500 rounded-full flex items-center justify-center">
+              <div className="h-5 w-5 sm:h-6 sm:w-6 bg-gradient-to-br from-blue-500 to-red-500 rounded-full flex items-center justify-center">
                 <span className="text-xs font-bold text-white">G</span>
               </div>
               <span>Continue with Google</span>
@@ -152,7 +152,7 @@ export default function LoginPage() {
         </div>
 
         {/* Sign Up Link */}
-        <p className="mt-8 text-center text-gray-400 text-lg">
+        <p className="mt-6 sm:mt-8 text-center text-gray-400 text-base sm:text-lg">
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="text-orange-400 hover:text-orange-300 font-semibold transition-colors">
             Sign up
