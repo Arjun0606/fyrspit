@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateFlightData } from '@/lib/comprehensive-flight-db';
+import { SmartFlightEngine } from '@/lib/smart-flight-engine';
 import { AircraftAchievementEngine } from '@/lib/aircraft-achievements';
 
 export async function POST(req: NextRequest) {
@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
 
     console.log(`🔍 Looking up flight: ${flightNumber}`);
 
-    // Use our comprehensive flight database directly
-    const flightData = generateFlightData(flightNumber);
+    // Use our smart flight engine for AI-like generation
+    const flightData = SmartFlightEngine.generateFlightData(flightNumber);
 
     if (!flightData) {
       return NextResponse.json(
@@ -77,19 +77,9 @@ export async function POST(req: NextRequest) {
       stats.xpEarned += 75;
     }
 
-    // Convert to proper format for frontend
+    // Return the smart engine data directly with stats
     const responseData = {
-      flightNumber: flightData.flightNumber,
-      airline: flightData.airline,
-      aircraft: flightData.aircraft,
-      route: flightData.route,
-      timing: {
-        scheduled: {
-          departure: new Date().toISOString(),
-          arrival: new Date(Date.now() + flightData.route.duration * 60000).toISOString()
-        }
-      },
-      status: { current: 'scheduled' },
+      ...flightData,
       stats
     };
 

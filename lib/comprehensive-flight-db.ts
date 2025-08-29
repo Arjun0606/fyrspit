@@ -18,6 +18,34 @@ export interface FlightRoute {
 }
 
 export const FLIGHT_DATABASE: Record<string, FlightRoute> = {
+  // Qatar Airways
+  'QR5943': {
+    flightNumber: 'QR5943',
+    airline: { name: 'Qatar Airways', code: 'QR', country: 'Qatar' },
+    aircraft: { type: 'Boeing 787-8', manufacturer: 'Boeing' },
+    route: {
+      from: { iata: 'DOH', city: 'Doha', country: 'Qatar', airport: 'Hamad International' },
+      to: { iata: 'DXB', city: 'Dubai', country: 'UAE', airport: 'Dubai International' },
+      distance: 378,
+      duration: 65
+    },
+    frequency: 'daily',
+    category: 'international'
+  },
+  'QR1234': {
+    flightNumber: 'QR1234',
+    airline: { name: 'Qatar Airways', code: 'QR', country: 'Qatar' },
+    aircraft: { type: 'Airbus A350-900', manufacturer: 'Airbus' },
+    route: {
+      from: { iata: 'DOH', city: 'Doha', country: 'Qatar', airport: 'Hamad International' },
+      to: { iata: 'LHR', city: 'London', country: 'UK', airport: 'Heathrow' },
+      distance: 3253,
+      duration: 425
+    },
+    frequency: 'daily',
+    category: 'long-haul'
+  },
+
   // Major Indian Airlines
   'QP1457': {
     flightNumber: 'QP1457',
@@ -304,6 +332,17 @@ export function generateFlightData(flightNumber: string): FlightRoute | null {
         { from: 'DXB', to: 'LHR', distance: 3414 },
         { from: 'DXB', to: 'JFK', distance: 6838 },
         { from: 'DXB', to: 'BOM', distance: 1197 }
+      ]
+    },
+    'QR': { // Qatar Airways
+      name: 'Qatar Airways',
+      country: 'Qatar',
+      aircraft: ['Boeing 787-8', 'Airbus A350-900', 'Boeing 777-300ER'],
+      commonRoutes: [
+        { from: 'DOH', to: 'DXB', distance: 378 },
+        { from: 'DOH', to: 'LHR', distance: 3253 },
+        { from: 'DOH', to: 'JFK', distance: 6711 },
+        { from: 'DOH', to: 'BOM', distance: 1533 }
       ]
     }
   };

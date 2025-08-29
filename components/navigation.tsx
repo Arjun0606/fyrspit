@@ -18,6 +18,7 @@ import {
   Map,
   Upload,
   Award,
+  Users,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -43,6 +44,7 @@ export function Navigation({ currentPath }: NavigationProps) {
     { icon: Home, label: 'Feed', href: '/feed', active: currentPath === '/feed' || currentPath === '/' },
     { icon: Search, label: 'Explore', href: '/explore', active: currentPath === '/explore' },
     { icon: Plus, label: 'Log Flight', href: '/flights/new', active: currentPath === '/flights/new' || currentPath.startsWith('/flights') },
+    { icon: Users, label: 'Social', href: '/social', active: currentPath === '/social' },
     { icon: Bell, label: 'Notifications', href: '/notifications', active: currentPath === '/notifications' },
   ];
 
