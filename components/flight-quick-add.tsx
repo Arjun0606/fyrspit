@@ -29,7 +29,7 @@ export function FlightQuickAdd({ onSuccess }: FlightQuickAddProps) {
     try {
       // Looking up flight data...
       
-      const response = await fetch('/api/flights/production', {
+      const response = await fetch('/api/flights/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
