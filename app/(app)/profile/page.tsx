@@ -127,55 +127,55 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
       {/* Header */}
       <div className="bg-gray-900/50 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+            <div className="flex items-center space-x-4 sm:space-x-6">
               {/* Profile Picture */}
-              <div className="relative">
+              <div className="relative shrink-0">
                 {profile.profilePictureUrl ? (
                   <Image
                     src={profile.profilePictureUrl}
                     alt={profile.username}
-                    width={120}
-                    height={120}
-                    className="rounded-full object-cover border-4 border-orange-500"
+                    width={80}
+                    height={80}
+                    className="rounded-full object-cover border-4 border-orange-500 sm:w-30 sm:h-30"
                   />
                 ) : (
-                  <div className="w-30 h-30 bg-gray-700 rounded-full flex items-center justify-center border-4 border-gray-600">
-                    <User className="h-12 w-12 text-gray-400" />
+                  <div className="w-20 h-20 sm:w-30 sm:h-30 bg-gray-700 rounded-full flex items-center justify-center border-4 border-gray-600">
+                    <User className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400" />
                   </div>
                 )}
-                <button className="absolute bottom-0 right-0 bg-orange-500 rounded-full p-2 hover:bg-orange-600 transition-colors">
-                  <Edit className="h-4 w-4 text-gray-900" />
+                <button className="absolute bottom-0 right-0 bg-orange-500 rounded-full p-1.5 sm:p-2 hover:bg-orange-600 transition-colors">
+                  <Edit className="h-3 w-3 sm:h-4 sm:w-4 text-gray-900" />
                 </button>
               </div>
 
               {/* Profile Info */}
-              <div>
-                <h1 className="text-3xl font-bold text-white">@{profile.username}</h1>
-                <div className="flex items-center space-x-4 mt-2 text-gray-300">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white truncate">@{profile.username}</h1>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 sm:mt-2 text-gray-300 text-sm">
                   {profile.age && (
                     <span>{profile.age} years old</span>
                   )}
                   {profile.homeAirport && (
                     <div className="flex items-center space-x-1">
-                      <MapPin className="h-4 w-4" />
+                      <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span>{profile.homeAirport}</span>
                     </div>
                   )}
                   <div className="flex items-center space-x-1">
-                    <Calendar className="h-4 w-4" />
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span>{flights.length} flights</span>
                   </div>
                 </div>
                 
                 {/* Level and XP */}
                 {profile.stats && (
-                  <div className="mt-3 flex items-center space-x-4">
-                    <div className="bg-gradient-to-r from-orange-500 to-yellow-500 text-gray-900 px-3 py-1 rounded-full text-sm font-bold">
+                  <div className="mt-2 sm:mt-3 flex items-center space-x-3 sm:space-x-4">
+                    <div className="bg-gradient-to-r from-orange-500 to-yellow-500 text-gray-900 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-bold">
                       Level {profile.stats.level}
                     </div>
-                    <div className="text-sm text-gray-400">
+                    <div className="text-xs sm:text-sm text-gray-400">
                       {profile.stats.xp.toLocaleString()} XP
                     </div>
                   </div>
@@ -184,14 +184,14 @@ export default function ProfilePage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center space-x-3">
-              <button className="btn-secondary flex items-center space-x-2">
-                <Share2 className="h-4 w-4" />
-                <span>Share</span>
+            <div className="flex items-center space-x-2 sm:space-x-3 self-end sm:self-auto">
+              <button className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors text-sm">
+                <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Share</span>
               </button>
-              <Link href="/settings" className="btn-secondary flex items-center space-x-2">
-                <Settings className="h-4 w-4" />
-                <span>Settings</span>
+              <Link href="/settings" className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors text-sm">
+                <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Settings</span>
               </Link>
             </div>
           </div>
@@ -200,23 +200,23 @@ export default function ProfilePage() {
 
       {/* Stats Cards */}
       {profile.stats && (
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-orange-400">{profile.stats.totalFlights}</div>
-              <div className="text-sm text-gray-400">Total Flights</div>
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-3 sm:p-4 shadow-lg text-center">
+              <div className="text-lg sm:text-2xl font-bold text-orange-400">{profile.stats.totalFlights}</div>
+              <div className="text-xs sm:text-sm text-gray-400">Total Flights</div>
             </div>
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-blue-400">{profile.stats.totalMiles.toLocaleString()}</div>
-              <div className="text-sm text-gray-400">Miles Flown</div>
+            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-3 sm:p-4 shadow-lg text-center">
+              <div className="text-lg sm:text-2xl font-bold text-blue-400">{profile.stats.totalMiles.toLocaleString()}</div>
+              <div className="text-xs sm:text-sm text-gray-400">Miles Flown</div>
             </div>
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-green-400">{profile.stats.airportsVisited}</div>
-              <div className="text-sm text-gray-400">Airports</div>
+            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-3 sm:p-4 shadow-lg text-center">
+              <div className="text-lg sm:text-2xl font-bold text-green-400">{profile.stats.airportsVisited}</div>
+              <div className="text-xs sm:text-sm text-gray-400">Airports</div>
             </div>
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-purple-400">{profile.stats.countriesVisited}</div>
-              <div className="text-sm text-gray-400">Countries</div>
+            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-3 sm:p-4 shadow-lg text-center">
+              <div className="text-lg sm:text-2xl font-bold text-purple-400">{profile.stats.countriesVisited}</div>
+              <div className="text-xs sm:text-sm text-gray-400">Countries</div>
             </div>
           </div>
         </div>
@@ -225,7 +225,7 @@ export default function ProfilePage() {
       {/* Tabs */}
       <div className="max-w-7xl mx-auto px-4">
         <div className="border-b border-gray-700">
-          <nav className="flex space-x-8">
+          <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto">
             {[
               { id: 'flights', label: 'Flights', icon: Plane },
               { id: 'stats', label: 'Statistics', icon: Trophy },
@@ -234,14 +234,14 @@ export default function ProfilePage() {
               <button
                 key={id}
                 onClick={() => setActiveTab(id as any)}
-                className={`flex items-center space-x-2 py-4 px-2 border-b-2 transition-colors ${
+                className={`flex items-center space-x-1 sm:space-x-2 py-3 sm:py-4 px-2 border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === id
                     ? 'border-orange-500 text-orange-400'
                     : 'border-transparent text-gray-400 hover:text-gray-300'
                 }`}
               >
-                <Icon className="h-5 w-5" />
-                <span>{label}</span>
+                <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-sm sm:text-base">{label}</span>
               </button>
             ))}
           </nav>

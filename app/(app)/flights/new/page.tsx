@@ -117,28 +117,28 @@ export default function NewFlightPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-2xl mx-auto px-4 py-4 sm:py-6">
       {/* Header */}
-      <div className="flex items-center space-x-4 mb-8">
+      <div className="flex items-center space-x-3 sm:space-x-4 mb-6 sm:mb-8">
         <Link
           href="/feed"
-          className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+          className="p-2 hover:bg-gray-800 rounded-lg transition-colors shrink-0"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Log a Flight</h1>
-          <p className="text-gray-400">Enter any flight number → Get everything automatically</p>
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold">Log a Flight</h1>
+          <p className="text-gray-400 text-sm sm:text-base">Enter any flight number → Get everything automatically</p>
         </div>
       </div>
 
       {/* Main Flight Entry */}
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Flight Number Input */}
-        <div className="card">
+        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-lg">
           <div className="flex items-center space-x-2 mb-4">
-            <Plane className="h-6 w-6 text-orange-500" />
-            <h2 className="text-xl font-semibold">Flight Number</h2>
+            <Plane className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500" />
+            <h2 className="text-lg sm:text-xl font-semibold">Flight Number</h2>
           </div>
           
           <div className="space-y-4">
@@ -147,7 +147,7 @@ export default function NewFlightPage() {
                 type="text"
                 value={flightNumber}
                 onChange={(e) => setFlightNumber(e.target.value.toUpperCase())}
-                className="w-full px-6 py-4 bg-gray-800 border border-gray-600 rounded-lg text-white text-xl font-mono placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-gray-800 border border-gray-600 rounded-lg text-white text-lg sm:text-xl font-mono placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 placeholder="e.g. QP1457, AA123, EK456"
                 onKeyPress={(e) => e.key === 'Enter' && handleFlightLookup()}
               />
@@ -169,7 +169,7 @@ export default function NewFlightPage() {
             <button
               onClick={handleFlightLookup}
               disabled={isLoading || !flightNumber.trim()}
-              className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-gray-900 font-bold py-4 px-6 rounded-lg hover:from-orange-600 hover:to-yellow-600 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
+              className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-gray-900 font-bold py-3 sm:py-4 px-6 rounded-lg hover:from-orange-600 hover:to-yellow-600 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg text-sm sm:text-base"
             >
               {isLoading ? 'Getting Flight Data...' : 'Get Flight Details ✈️'}
             </button>
@@ -178,7 +178,7 @@ export default function NewFlightPage() {
 
         {/* Flight Data Preview */}
         {flightData && (
-          <div className="card border-2 border-green-500/20 bg-green-500/5">
+          <div className="bg-gray-800/50 backdrop-blur-sm border-2 border-green-500/20 bg-green-500/5 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-lg">
             <div className="flex items-center space-x-2 mb-4">
               <div className="h-6 w-6 bg-green-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm">✓</span>
@@ -209,7 +209,7 @@ export default function NewFlightPage() {
               )}
 
               {/* Flight Details */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {flightData.airline && (
                   <div className="p-3 bg-gray-800 rounded-lg">
                     <div className="text-sm text-gray-400">Airline</div>
@@ -278,7 +278,7 @@ export default function NewFlightPage() {
         )}
 
         {/* Help Text */}
-        <div className="card bg-gray-800/50">
+        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-lg">
           <h3 className="font-semibold mb-2">How it works:</h3>
           <ul className="space-y-1 text-sm text-gray-400">
             <li>• Enter any flight number (e.g., QP1457, AA123, EK456)</li>
