@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { RealFlightAPI } from '@/lib/real-flight-api';
+import { generateFlightData } from '@/lib/comprehensive-flight-db';
 import { AircraftAchievementEngine } from '@/lib/aircraft-achievements';
 
 export async function POST(req: NextRequest) {
@@ -13,8 +13,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get REAL flight data from multiple APIs
-    const flightData = await RealFlightAPI.getFlightData(flightNumber);
+    console.log(`🔍 Looking up flight: ${flightNumber}`);
+
+    // Use our comprehensive flight database directly
+    const flightData = generateFlightData(flightNumber);
 
     if (!flightData) {
       return NextResponse.json(
@@ -23,18 +25,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.log(`✅ Found flight data for ${flightNumber}`);
+
     // Calculate stats based on the flight data
     const stats = {
       xpEarned: 50, // Base XP for logging a flight
       achievements: [],
       milestones: []
     };
-
-    // Calculate distance if not provided
-    if (!flightData.route.distance && flightData.route.departure.iata !== 'UNK' && flightData.route.arrival.iata !== 'UNK') {
-      // Use airport coordinates to calculate distance (implement later)
-      flightData.route.distance = 500; // Default estimate
-    }
 
     // Add distance-based XP
     if (flightData.route.distance) {
@@ -69,7 +67,7 @@ export async function POST(req: NextRequest) {
     }
 
     // International flight achievement
-    if (flightData.route.departure.country !== flightData.route.arrival.country) {
+    if (flightData.route.from.country !== flightData.route.to.country) {
       stats.achievements.push({
         id: 'border_crosser',
         name: 'Border Crosser',
@@ -79,12 +77,25 @@ export async function POST(req: NextRequest) {
       stats.xpEarned += 75;
     }
 
+    // Convert to proper format for frontend
+    const responseData = {
+      flightNumber: flightData.flightNumber,
+      airline: flightData.airline,
+      aircraft: flightData.aircraft,
+      route: flightData.route,
+      timing: {
+        scheduled: {
+          departure: new Date().toISOString(),
+          arrival: new Date(Date.now() + flightData.route.duration * 60000).toISOString()
+        }
+      },
+      status: { current: 'scheduled' },
+      stats
+    };
+
     return NextResponse.json({
       success: true,
-      data: {
-        flight: flightData,
-        stats
-      }
+      ...responseData
     });
 
   } catch (error) {

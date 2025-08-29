@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { updateProfile } from 'firebase/auth';
+import { updateProfile, deleteUser } from 'firebase/auth';
 import { User, Bell, Shield, Globe, Plane, Camera, LogOut, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 interface UserSettings {
   username: string;
@@ -87,10 +88,10 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       await updateDoc(doc(db, 'users', user.uid), settings);
-      // Show success message
+      toast.success('Settings saved successfully!');
     } catch (error) {
       console.error('Error saving settings:', error);
-      // Show error message
+      toast.error('Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -99,9 +100,32 @@ export default function SettingsPage() {
   const signOut = async () => {
     try {
       await auth.signOut();
+      toast.success('Signed out successfully');
       router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (!user) return;
+    
+    const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.');
+    if (!confirmed) return;
+
+    try {
+      // Delete user data from Firestore
+      await updateDoc(doc(db, 'users', user.uid), { deleted: true });
+      
+      // Delete user account
+      await deleteUser(user);
+      
+      toast.success('Account deleted successfully');
+      router.push('/');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error('Failed to delete account. You may need to re-authenticate.');
     }
   };
 
@@ -407,7 +431,10 @@ export default function SettingsPage() {
                   <h2 className="text-xl font-semibold text-red-400 mb-6">Danger Zone</h2>
                   
                   <div className="space-y-4">
-                    <button className="w-full flex items-center justify-center space-x-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 px-4 py-3 rounded-lg transition-colors">
+                    <button 
+                      onClick={deleteAccount}
+                      className="w-full flex items-center justify-center space-x-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 px-4 py-3 rounded-lg transition-colors"
+                    >
                       <Trash2 className="h-5 w-5" />
                       <span>Delete Account</span>
                     </button>

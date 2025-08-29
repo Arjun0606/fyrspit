@@ -413,9 +413,9 @@ export default function OnboardingPage() {
                   {filteredAirports.map((airport) => (
                     <button
                       key={airport.code}
-                      onClick={() => setData({...data, homeAirport: airport.code})}
+                      onClick={() => setData({...data, homeAirport: airport.city})}
                       className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
-                        data.homeAirport === airport.code 
+                        data.homeAirport === airport.city 
                           ? 'border-orange-500 bg-orange-500/20 text-orange-400' 
                           : 'border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500'
                       }`}
