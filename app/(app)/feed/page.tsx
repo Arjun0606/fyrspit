@@ -90,32 +90,32 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="max-w-4xl mx-auto px-4 py-4 sm:py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Your Feed</h1>
-            <p className="text-gray-400">Latest flights from the aviation community</p>
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <div className="flex-1 pr-4">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Your Feed</h1>
+            <p className="text-gray-400 text-sm sm:text-base">Latest flights from the aviation community</p>
           </div>
           
           <button
             onClick={() => setShowQuickAdd(!showQuickAdd)}
-            className="btn-primary flex items-center space-x-2"
+            className="btn-primary flex items-center space-x-1 sm:space-x-2 shrink-0"
           >
-            <Plus className="h-5 w-5" />
-            <span>Log Flight</span>
+            <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-sm sm:text-base">Log Flight</span>
           </button>
         </div>
 
         {/* Quick Add Flight */}
         {showQuickAdd && (
-          <div className="mb-8">
-            <div className="card">
+          <div className="mb-6 sm:mb-8">
+            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-lg">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Quick Add Flight</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-white">Quick Add Flight</h3>
                 <button
                   onClick={() => setShowQuickAdd(false)}
-                  className="text-gray-400 hover:text-gray-300"
+                  className="text-gray-400 hover:text-gray-300 text-xl sm:text-2xl"
                 >
                   ×
                 </button>
@@ -131,45 +131,45 @@ export default function FeedPage() {
         )}
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="card text-center">
-            <TrendingUp className="h-8 w-8 text-orange-500 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">{flights.length}</div>
-            <div className="text-sm text-gray-400">Recent Flights</div>
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-3 sm:p-4 shadow-lg text-center">
+            <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500 mx-auto mb-2" />
+            <div className="text-lg sm:text-2xl font-bold text-white">{flights.length}</div>
+            <div className="text-xs sm:text-sm text-gray-400">Recent Flights</div>
           </div>
           
-          <div className="card text-center">
-            <MapPin className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-3 sm:p-4 shadow-lg text-center">
+            <MapPin className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 mx-auto mb-2" />
+            <div className="text-lg sm:text-2xl font-bold text-white">
               {new Set(flights.flatMap(f => [f.route.from.iata, f.route.to.iata])).size}
             </div>
-            <div className="text-sm text-gray-400">Airports</div>
+            <div className="text-xs sm:text-sm text-gray-400">Airports</div>
           </div>
           
-          <div className="card text-center">
-            <Plane className="h-8 w-8 text-green-500 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-3 sm:p-4 shadow-lg text-center">
+            <Plane className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 mx-auto mb-2" />
+            <div className="text-lg sm:text-2xl font-bold text-white">
               {new Set(flights.map(f => `${f.aircraft.manufacturer} ${f.aircraft.model}`)).size}
             </div>
-            <div className="text-sm text-gray-400">Aircraft Types</div>
+            <div className="text-xs sm:text-sm text-gray-400">Aircraft Types</div>
           </div>
         </div>
 
         {/* Flights Feed */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {loadingFlights ? (
             <div className="space-y-4">
               {[1, 2, 3].map(i => (
-                <div key={i} className="card animate-pulse">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <div className="w-12 h-12 bg-gray-700 rounded-full"></div>
+                <div key={i} className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6 shadow-lg animate-pulse">
+                  <div className="flex items-center space-x-3 sm:space-x-4 mb-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-700 rounded-full"></div>
                     <div className="space-y-2">
-                      <div className="h-4 bg-gray-700 rounded w-32"></div>
-                      <div className="h-3 bg-gray-700 rounded w-24"></div>
+                      <div className="h-3 sm:h-4 bg-gray-700 rounded w-24 sm:w-32"></div>
+                      <div className="h-2 sm:h-3 bg-gray-700 rounded w-16 sm:w-24"></div>
                     </div>
                   </div>
-                  <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+                  <div className="h-3 sm:h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 sm:h-4 bg-gray-700 rounded w-1/2"></div>
                 </div>
               ))}
             </div>
@@ -184,7 +184,7 @@ export default function FeedPage() {
             </div>
           ) : (
             flights.map((flight) => (
-              <div key={flight.id} className="card hover:bg-gray-800/80 transition-colors">
+              <div key={flight.id} className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6 shadow-lg hover:bg-gray-800/80 transition-colors">
                 {/* User Header */}
                 <div className="flex items-center space-x-3 mb-4">
                   {flight.userProfilePicture ? (
