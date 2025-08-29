@@ -58,6 +58,19 @@ export const FLIGHT_DATABASE: Record<string, FlightRoute> = {
     frequency: 'daily',
     category: 'domestic'
   },
+  '6E2345': {
+    flightNumber: '6E2345',
+    airline: { name: 'IndiGo', code: '6E', country: 'India' },
+    aircraft: { type: 'Airbus A320neo', manufacturer: 'Airbus' },
+    route: {
+      from: { iata: 'BOM', city: 'Mumbai', country: 'India', airport: 'Chhatrapati Shivaji Maharaj International' },
+      to: { iata: 'BLR', city: 'Bengaluru', country: 'India', airport: 'Kempegowda International' },
+      distance: 537,
+      duration: 85
+    },
+    frequency: 'daily',
+    category: 'domestic'
+  },
   'AI131': {
     flightNumber: 'AI131',
     airline: { name: 'Air India', code: 'AI', country: 'India' },

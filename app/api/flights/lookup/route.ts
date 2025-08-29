@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { RealFlightAPI } from '@/lib/real-flight-api';
+import { AircraftAchievementEngine } from '@/lib/aircraft-achievements';
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,27 +41,21 @@ export async function POST(req: NextRequest) {
       stats.xpEarned += Math.floor(flightData.route.distance / 100); // 1 XP per 100 miles
     }
 
-    // Add aircraft-based achievements
-    if (flightData.aircraft.type.toLowerCase().includes('a380')) {
+    // Add comprehensive aircraft-based achievements
+    const aircraftAchievement = AircraftAchievementEngine.getAircraftAchievement(flightData.aircraft.type);
+    if (aircraftAchievement) {
       stats.achievements.push({
-        id: 'superjumbo',
-        name: 'Superjumbo Explorer',
-        description: 'Flew on an Airbus A380',
-        xp: 100
+        id: aircraftAchievement.id,
+        name: aircraftAchievement.name,
+        description: aircraftAchievement.description,
+        xp: aircraftAchievement.xp
       });
-      stats.xpEarned += 100;
+      stats.xpEarned += aircraftAchievement.xp;
     }
 
-    // Boeing 737 achievement
-    if (flightData.aircraft.type.toLowerCase().includes('737')) {
-      stats.achievements.push({
-        id: 'workhorse',
-        name: 'Workhorse Rider',
-        description: 'Flew on the world\'s most popular aircraft',
-        xp: 25
-      });
-      stats.xpEarned += 25;
-    }
+    // Add manufacturer bonus
+    const manufacturerBonus = AircraftAchievementEngine.getManufacturerBonus(flightData.aircraft.manufacturer);
+    stats.xpEarned += manufacturerBonus;
 
     // Add route-based achievements
     if (flightData.route.distance > 3000) {
