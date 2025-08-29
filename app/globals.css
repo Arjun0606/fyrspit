@@ -57,6 +57,8 @@ body {
   
   .gradient-text {
     @apply bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-transparent;
+    line-height: 1.1;
+    padding-bottom: 0.1em;
   }
 }
 

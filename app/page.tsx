@@ -32,16 +32,16 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-24 sm:pt-32 pb-16 sm:pb-20 px-4">
+      <section className="relative pt-28 sm:pt-36 pb-16 sm:pb-20 px-4">
         <div className="container mx-auto text-center max-w-5xl">
           <div className="inline-flex items-center space-x-2 bg-teal-500/10 border border-teal-500/20 rounded-full px-4 sm:px-6 py-2 mb-6 sm:mb-8">
             <div className="h-3 w-3 sm:h-4 sm:w-4 bg-teal-400 rounded-full"></div>
             <span className="text-teal-400 text-xs sm:text-sm font-medium">Enter any flight number → Get EVERYTHING</span>
           </div>
           
-          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight">
-            <span className="block">The Social</span>
-            <span className="block">Diary</span>
+          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold text-white mb-4 sm:mb-6 leading-none">
+            <span className="block mb-1 sm:mb-2">The Social</span>
+            <span className="block mb-1 sm:mb-2">Diary</span>
             <span className="gradient-text block">for Flying</span>
           </h1>
           
