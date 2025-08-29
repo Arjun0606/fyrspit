@@ -33,8 +33,7 @@ export function FlightQuickAdd({ onSuccess }: FlightQuickAddProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          flightNumber: flightNumber.trim().toUpperCase(),
-          date: new Date().toISOString().split('T')[0]
+          flightNumber: flightNumber.trim().toUpperCase()
         })
       });
 

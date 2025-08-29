@@ -22,11 +22,13 @@ export const metadata: Metadata = {
     siteName: 'Fyrspit',
     locale: 'en_US',
     type: 'website',
+    images: ['/fyrspit-logo.png'],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Fyrspit - The Social Diary for Flying',
     description: 'Log flights. Tell your story. Discover the culture of flying.',
+    images: ['/fyrspit-logo.png'],
   },
   manifest: '/manifest.json',
 }

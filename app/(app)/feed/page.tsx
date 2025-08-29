@@ -2,135 +2,312 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/lib/firebase';
-import { Flight } from '@/types';
-import { FlightCard } from '@/components/flight-card';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Plus, Filter } from 'lucide-react';
+import { auth, db } from '@/lib/firebase';
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { Plus, TrendingUp, MapPin, Plane, Clock, Trophy, Star } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { FlightQuickAdd } from '@/components/flight-quick-add';
+
+interface Flight {
+  id: string;
+  userId: string;
+  userDisplayName: string;
+  userUsername: string;
+  userProfilePicture?: string;
+  flightNumber: string;
+  airline: { name: string; code: string };
+  aircraft: { model: string; manufacturer: string };
+  route: {
+    from: { iata: string; city: string };
+    to: { iata: string; city: string };
+    distance: number;
+  };
+  date: string;
+  reviewShort: string;
+  photos?: string[];
+  createdAt: string;
+}
 
 export default function FeedPage() {
-  const [user] = useAuthState(auth);
+  const [user, loading] = useAuthState(auth);
   const [flights, setFlights] = useState<Flight[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'friends'>('all');
+  const [loadingFlights, setLoadingFlights] = useState(true);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
 
   useEffect(() => {
-    const fetchFeed = async () => {
-      if (!user) return;
+    if (user) {
+      loadRecentFlights();
+    }
+  }, [user]);
 
-      try {
-        // Fetch flights via API
-        const response = await fetch('/api/flights?limit=20');
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch feed');
-        }
-        
-        const data = await response.json();
-        const flightData: Flight[] = data.flights.map((flight: any) => ({
-          ...flight,
-          createdAt: new Date(flight.createdAt),
-          editedAt: flight.editedAt ? new Date(flight.editedAt) : undefined,
-        }));
-
-        setFlights(flightData);
-      } catch (error) {
-        console.error('Error fetching feed:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFeed();
-  }, [user, filter]);
+  const loadRecentFlights = async () => {
+    try {
+      const flightsQuery = query(
+        collection(db, 'flights'),
+        orderBy('createdAt', 'desc'),
+        limit(20)
+      );
+      
+      const flightsSnapshot = await getDocs(flightsQuery);
+      const recentFlights = flightsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Flight[];
+      
+      setFlights(recentFlights);
+    } catch (error) {
+      console.error('Error loading flights:', error);
+    } finally {
+      setLoadingFlights(false);
+    }
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-white mb-4">Welcome to Fyrspit</h1>
+            <p className="text-xl text-gray-300 mb-8">The social diary for flying</p>
+            <div className="space-x-4">
+              <Link href="/signup" className="btn-primary">Sign Up</Link>
+              <Link href="/login" className="btn-secondary">Login</Link>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Your Feed</h1>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center bg-gray-800 rounded-lg p-1">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-3 py-1 rounded text-sm transition-colors ${
-                filter === 'all' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter('friends')}
-              className={`px-3 py-1 rounded text-sm transition-colors ${
-                filter === 'friends' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Friends
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Your Feed</h1>
+            <p className="text-gray-400">Latest flights from the aviation community</p>
           </div>
+          
+          <button
+            onClick={() => setShowQuickAdd(!showQuickAdd)}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Log Flight</span>
+          </button>
         </div>
-      </div>
 
-      {/* Composer CTA */}
-      <Link href="/flights/new" className="block mb-6">
-        <div className="card border-dashed border-gray-600 hover:border-teal-500 transition-colors cursor-pointer group">
-          <div className="flex items-center space-x-3">
-            <div className="flex-shrink-0">
-              <div className="h-10 w-10 bg-teal-600 rounded-full flex items-center justify-center group-hover:bg-teal-500 transition-colors">
-                <Plus className="h-5 w-5 text-white" />
+        {/* Quick Add Flight */}
+        {showQuickAdd && (
+          <div className="mb-8">
+            <div className="card">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Quick Add Flight</h3>
+                <button
+                  onClick={() => setShowQuickAdd(false)}
+                  className="text-gray-400 hover:text-gray-300"
+                >
+                  ×
+                </button>
               </div>
-            </div>
-            <div>
-              <p className="text-gray-300 group-hover:text-white transition-colors">
-                Share your latest flight experience...
-              </p>
+              <FlightQuickAdd 
+                onSuccess={() => {
+                  setShowQuickAdd(false);
+                  loadRecentFlights();
+                }}
+              />
             </div>
           </div>
-        </div>
-      </Link>
+        )}
 
-      {/* Feed */}
-      {flights.length === 0 ? (
-        <EmptyFeed />
-      ) : (
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="card text-center">
+            <TrendingUp className="h-8 w-8 text-orange-500 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-white">{flights.length}</div>
+            <div className="text-sm text-gray-400">Recent Flights</div>
+          </div>
+          
+          <div className="card text-center">
+            <MapPin className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-white">
+              {new Set(flights.flatMap(f => [f.route.from.iata, f.route.to.iata])).size}
+            </div>
+            <div className="text-sm text-gray-400">Airports</div>
+          </div>
+          
+          <div className="card text-center">
+            <Plane className="h-8 w-8 text-green-500 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-white">
+              {new Set(flights.map(f => `${f.aircraft.manufacturer} ${f.aircraft.model}`)).size}
+            </div>
+            <div className="text-sm text-gray-400">Aircraft Types</div>
+          </div>
+        </div>
+
+        {/* Flights Feed */}
         <div className="space-y-6">
-          {flights.map((flight) => (
-            <FlightCard key={flight.id} flight={flight} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+          {loadingFlights ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="card animate-pulse">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <div className="w-12 h-12 bg-gray-700 rounded-full"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-700 rounded w-32"></div>
+                      <div className="h-3 bg-gray-700 rounded w-24"></div>
+                    </div>
+                  </div>
+                  <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          ) : flights.length === 0 ? (
+            <div className="text-center py-12">
+              <Plane className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-300 mb-2">No flights yet</h3>
+              <p className="text-gray-400 mb-6">Be the first to share your aviation experience</p>
+              <Link href="/flights/new" className="btn-primary">
+                Log Your First Flight
+              </Link>
+            </div>
+          ) : (
+            flights.map((flight) => (
+              <div key={flight.id} className="card hover:bg-gray-800/80 transition-colors">
+                {/* User Header */}
+                <div className="flex items-center space-x-3 mb-4">
+                  {flight.userProfilePicture ? (
+                    <Image
+                      src={flight.userProfilePicture}
+                      alt={flight.userUsername}
+                      width={48}
+                      height={48}
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold">
+                        {flight.userUsername?.charAt(0).toUpperCase() || 'U'}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <div className="font-semibold text-white">@{flight.userUsername}</div>
+                    <div className="text-sm text-gray-400 flex items-center space-x-1">
+                      <Clock className="h-3 w-3" />
+                      <span>{new Date(flight.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
 
-function EmptyFeed() {
-  return (
-    <div className="text-center py-12">
-      <div className="max-w-md mx-auto">
-        <div className="h-16 w-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Plus className="h-8 w-8 text-gray-600" />
+                {/* Flight Details */}
+                <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-white">{flight.route.from.iata}</div>
+                        <div className="text-sm text-gray-400">{flight.route.from.city}</div>
+                      </div>
+                      <div className="flex-1 flex items-center justify-center">
+                        <div className="flex items-center space-x-2 text-gray-400">
+                          <div className="w-8 h-px bg-gray-400"></div>
+                          <Plane className="h-4 w-4" />
+                          <div className="w-8 h-px bg-gray-400"></div>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-white">{flight.route.to.iata}</div>
+                        <div className="text-sm text-gray-400">{flight.route.to.city}</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <div className="text-gray-400">Flight</div>
+                      <div className="text-white font-semibold">
+                        {flight.airline.code} {flight.flightNumber}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-400">Aircraft</div>
+                      <div className="text-white font-semibold">
+                        {flight.aircraft.manufacturer} {flight.aircraft.model}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-400">Distance</div>
+                      <div className="text-white font-semibold">{flight.route.distance} mi</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Review */}
+                {flight.reviewShort && (
+                  <div className="mb-4">
+                    <p className="text-gray-300">"{flight.reviewShort}"</p>
+                  </div>
+                )}
+
+                {/* Photos */}
+                {flight.photos && flight.photos.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {flight.photos.slice(0, 4).map((photo, index) => (
+                      <div key={index} className="relative aspect-video">
+                        <Image
+                          src={photo}
+                          alt={`Flight photo ${index + 1}`}
+                          fill
+                          className="object-cover rounded-lg"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-700">
+                  <div className="flex items-center space-x-4">
+                    <button className="flex items-center space-x-1 text-gray-400 hover:text-red-400 transition-colors">
+                      <Star className="h-4 w-4" />
+                      <span className="text-sm">Like</span>
+                    </button>
+                    <button className="flex items-center space-x-1 text-gray-400 hover:text-blue-400 transition-colors">
+                      <span className="text-sm">Comment</span>
+                    </button>
+                  </div>
+                  
+                  <Link 
+                    href={`/flights/${flight.id}`}
+                    className="text-sm text-orange-400 hover:text-orange-300 transition-colors"
+                  >
+                    View Details
+                  </Link>
+                </div>
+              </div>
+            ))
+          )}
         </div>
-        <h3 className="text-xl font-semibold mb-2">Your feed is empty</h3>
-        <p className="text-gray-400 mb-6">
-          Start by logging your first flight or following other aviation enthusiasts to see their journeys.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/flights/new" className="btn-primary">
-            Log Your First Flight
-          </Link>
-          <Link href="/explore" className="btn-secondary">
-            Discover People
-          </Link>
-        </div>
+
+        {/* Load More */}
+        {flights.length > 0 && (
+          <div className="text-center mt-8">
+            <button className="btn-secondary">
+              Load More Flights
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

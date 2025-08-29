@@ -1,271 +1,377 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, TrendingUp, Users, MapPin, Plane, Star } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, TrendingUp, MapPin, Users, Plane, Trophy, Filter, Globe } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+
+interface TrendingRoute {
+  from: { iata: string; city: string; country: string };
+  to: { iata: string; city: string; country: string };
+  flightCount: number;
+  distance: number;
+  popularAirlines: string[];
+}
+
+interface PopularUser {
+  id: string;
+  username: string;
+  profilePicture?: string;
+  totalFlights: number;
+  level: number;
+  badges: string[];
+}
+
+interface FeaturedAirport {
+  iata: string;
+  name: string;
+  city: string;
+  country: string;
+  recentFlights: number;
+  popularWith: string[];
+}
 
 export default function ExplorePage() {
+  const [activeTab, setActiveTab] = useState<'routes' | 'users' | 'airports' | 'aircraft'>('routes');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('trending');
 
-  const tabs = [
-    { id: 'trending', name: 'Trending', icon: TrendingUp },
-    { id: 'people', name: 'People', icon: Users },
-    { id: 'places', name: 'Places', icon: MapPin },
-    { id: 'airlines', name: 'Airlines', icon: Plane },
+  // Mock data - in production, these would come from APIs
+  const trendingRoutes: TrendingRoute[] = [
+    {
+      from: { iata: 'LAX', city: 'Los Angeles', country: 'USA' },
+      to: { iata: 'JFK', city: 'New York', country: 'USA' },
+      flightCount: 245,
+      distance: 2475,
+      popularAirlines: ['American', 'Delta', 'JetBlue']
+    },
+    {
+      from: { iata: 'LHR', city: 'London', country: 'UK' },
+      to: { iata: 'DXB', city: 'Dubai', country: 'UAE' },
+      flightCount: 189,
+      distance: 3414,
+      popularAirlines: ['Emirates', 'British Airways']
+    },
+    {
+      from: { iata: 'BOM', city: 'Mumbai', country: 'India' },
+      to: { iata: 'BLR', city: 'Bangalore', country: 'India' },
+      flightCount: 156,
+      distance: 537,
+      popularAirlines: ['Akasa Air', 'IndiGo', 'Air India']
+    }
+  ];
+
+  const popularUsers: PopularUser[] = [
+    {
+      id: '1',
+      username: 'aviation_pro',
+      totalFlights: 150,
+      level: 8,
+      badges: ['Globe Trotter', 'Sky Explorer', 'Frequent Flyer']
+    },
+    {
+      id: '2',
+      username: 'pilot_sarah',
+      totalFlights: 89,
+      level: 6,
+      badges: ['Aircraft Expert', 'Route Master']
+    },
+    {
+      id: '3',
+      username: 'world_traveler',
+      totalFlights: 67,
+      level: 5,
+      badges: ['Country Collector', 'Airport Hunter']
+    }
+  ];
+
+  const featuredAirports: FeaturedAirport[] = [
+    {
+      iata: 'SIN',
+      name: 'Singapore Changi Airport',
+      city: 'Singapore',
+      country: 'Singapore',
+      recentFlights: 89,
+      popularWith: ['Frequent Flyers', 'Business Travelers']
+    },
+    {
+      iata: 'NRT',
+      name: 'Tokyo Narita International',
+      city: 'Tokyo',
+      country: 'Japan',
+      recentFlights: 76,
+      popularWith: ['Aviation Enthusiasts', 'Culture Explorers']
+    },
+    {
+      iata: 'CDG',
+      name: 'Charles de Gaulle Airport',
+      city: 'Paris',
+      country: 'France',
+      recentFlights: 65,
+      popularWith: ['Leisure Travelers', 'Food Lovers']
+    }
+  ];
+
+  const aircraftTypes = [
+    { type: 'Boeing 737', flights: 234, airlines: ['Southwest', 'American', 'United'] },
+    { type: 'Airbus A320', flights: 198, airlines: ['JetBlue', 'American', 'Delta'] },
+    { type: 'Boeing 777', flights: 145, airlines: ['Emirates', 'United', 'British Airways'] },
+    { type: 'Airbus A350', flights: 87, airlines: ['Qatar', 'Singapore', 'Lufthansa'] }
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-4">Explore</h1>
-        
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="input w-full pl-10"
-            placeholder="Search people, places, airlines..."
-          />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-4">Explore Aviation</h1>
+          <p className="text-xl text-gray-300 mb-6">Discover trending routes, top aviators, and popular destinations</p>
+          
+          {/* Search */}
+          <div className="max-w-2xl mx-auto relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search flights, users, airports, or aircraft..."
+              className="w-full pl-12 pr-4 py-4 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-1 bg-gray-800 rounded-lg p-1">
-          {tabs.map(({ id, name, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={`flex items-center space-x-2 flex-1 px-4 py-2 rounded-md transition-colors ${
-                activeTab === id
-                  ? 'bg-teal-600 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-700'
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              <span className="font-medium">{name}</span>
-            </button>
-          ))}
+        <div className="border-b border-gray-700 mb-8">
+          <nav className="flex justify-center space-x-8">
+            {[
+              { id: 'routes', label: 'Trending Routes', icon: TrendingUp },
+              { id: 'users', label: 'Top Aviators', icon: Users },
+              { id: 'airports', label: 'Popular Airports', icon: MapPin },
+              { id: 'aircraft', label: 'Aircraft Types', icon: Plane },
+            ].map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id as any)}
+                className={`flex items-center space-x-2 py-4 px-2 border-b-2 transition-colors ${
+                  activeTab === id
+                    ? 'border-orange-500 text-orange-400'
+                    : 'border-transparent text-gray-400 hover:text-gray-300'
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
         </div>
-      </div>
 
-      {/* Content */}
-      {activeTab === 'trending' && <TrendingContent />}
-      {activeTab === 'people' && <PeopleContent />}
-      {activeTab === 'places' && <PlacesContent />}
-      {activeTab === 'airlines' && <AirlinesContent />}
-    </div>
-  );
-}
-
-function TrendingContent() {
-  return (
-    <div className="space-y-6">
-      {/* Trending This Week */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Trending This Week</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <TrendingCard
-            title="Summer Routes"
-            description="Popular vacation destinations this season"
-            count="2.1k flights"
-            trend="+15%"
-          />
-          <TrendingCard
-            title="Business Class"
-            description="Premium cabin experiences"
-            count="847 reviews"
-            trend="+8%"
-          />
-          <TrendingCard
-            title="A350 Aircraft"
-            description="Latest aircraft reviews"
-            count="312 flights"
-            trend="+22%"
-          />
-          <TrendingCard
-            title="Asian Carriers"
-            description="Airlines from Asia-Pacific"
-            count="1.8k reviews"
-            trend="+12%"
-          />
-        </div>
-      </section>
-
-      {/* Popular Tags */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Popular Tags</h2>
-        <div className="flex flex-wrap gap-2">
-          {['window-seat', 'upgrade', 'delayed', 'smooth-flight', 'great-views', 'turbulence', 'meal', 'entertainment', 'lounge', 'first-class'].map((tag) => (
-            <span
-              key={tag}
-              className="px-3 py-1 bg-gray-800 text-teal-400 text-sm rounded-full hover:bg-gray-700 transition-colors cursor-pointer"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function PeopleContent() {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">Aviation Enthusiasts</h2>
-      <div className="space-y-4">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <PersonCard
-            key={i}
-            name={`User ${i}`}
-            bio="Aviation enthusiast and frequent flyer"
-            stats="127 flights • 15 countries"
-            avatar=""
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PlacesContent() {
-  return (
-    <div className="space-y-6">
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Popular Airports</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[
-            { code: 'JFK', name: 'John F. Kennedy Intl', city: 'New York', reviews: '2.1k' },
-            { code: 'LHR', name: 'Heathrow', city: 'London', reviews: '1.8k' },
-            { code: 'NRT', name: 'Narita Intl', city: 'Tokyo', reviews: '1.5k' },
-            { code: 'CDG', name: 'Charles de Gaulle', city: 'Paris', reviews: '1.3k' },
-          ].map((airport) => (
-            <PlaceCard key={airport.code} {...airport} />
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function AirlinesContent() {
-  return (
-    <div className="space-y-6">
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Top Airlines</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[
-            { code: 'SQ', name: 'Singapore Airlines', rating: 4.8, reviews: '892' },
-            { code: 'EK', name: 'Emirates', rating: 4.7, reviews: '1.2k' },
-            { code: 'QF', name: 'Qantas', rating: 4.6, reviews: '743' },
-            { code: 'LH', name: 'Lufthansa', rating: 4.5, reviews: '987' },
-          ].map((airline) => (
-            <AirlineCard key={airline.code} {...airline} />
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function TrendingCard({ title, description, count, trend }: {
-  title: string;
-  description: string;
-  count: string;
-  trend: string;
-}) {
-  return (
-    <div className="card hover:bg-gray-800/50 transition-colors cursor-pointer">
-      <div className="flex items-start justify-between mb-2">
-        <h3 className="font-semibold">{title}</h3>
-        <span className="text-green-400 text-sm font-medium">{trend}</span>
-      </div>
-      <p className="text-gray-400 text-sm mb-3">{description}</p>
-      <p className="text-teal-400 text-sm">{count}</p>
-    </div>
-  );
-}
-
-function PersonCard({ name, bio, stats, avatar }: {
-  name: string;
-  bio: string;
-  stats: string;
-  avatar: string;
-}) {
-  return (
-    <div className="card hover:bg-gray-800/50 transition-colors cursor-pointer">
-      <div className="flex items-center space-x-4">
-        <div className="h-12 w-12 bg-gray-700 rounded-full flex items-center justify-center">
-          <Users className="h-6 w-6 text-gray-400" />
-        </div>
-        <div className="flex-1">
-          <h3 className="font-semibold">{name}</h3>
-          <p className="text-gray-400 text-sm">{bio}</p>
-          <p className="text-teal-400 text-sm">{stats}</p>
-        </div>
-        <button className="btn-secondary">Follow</button>
-      </div>
-    </div>
-  );
-}
-
-function PlaceCard({ code, name, city, reviews }: {
-  code: string;
-  name: string;
-  city: string;
-  reviews: string;
-}) {
-  return (
-    <div className="card hover:bg-gray-800/50 transition-colors cursor-pointer">
-      <div className="flex items-center space-x-4">
-        <div className="h-12 w-12 bg-teal-600/20 rounded-lg flex items-center justify-center">
-          <MapPin className="h-6 w-6 text-teal-500" />
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center space-x-2">
-            <span className="font-mono font-bold text-teal-400">{code}</span>
-            <span className="font-semibold">{name}</span>
-          </div>
-          <p className="text-gray-400 text-sm">{city}</p>
-          <p className="text-gray-500 text-sm">{reviews} reviews</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AirlineCard({ code, name, rating, reviews }: {
-  code: string;
-  name: string;
-  rating: number;
-  reviews: string;
-}) {
-  return (
-    <div className="card hover:bg-gray-800/50 transition-colors cursor-pointer">
-      <div className="flex items-center space-x-4">
-        <div className="h-12 w-12 bg-teal-600/20 rounded-lg flex items-center justify-center">
-          <Plane className="h-6 w-6 text-teal-500" />
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center space-x-2">
-            <span className="font-mono font-bold text-teal-400">{code}</span>
-            <span className="font-semibold">{name}</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="flex">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={`h-3 w-3 ${
-                    i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-600'
-                  }`}
-                />
-              ))}
+        {/* Content */}
+        <div className="space-y-6">
+          {activeTab === 'routes' && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Trending Routes</h2>
+                <button className="btn-secondary flex items-center space-x-2">
+                  <Filter className="h-4 w-4" />
+                  <span>Filter</span>
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {trendingRoutes.map((route, index) => (
+                  <div key={index} className="card hover:bg-gray-800/80 transition-colors cursor-pointer">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-white">{route.from.iata}</div>
+                        <div className="text-sm text-gray-400">{route.from.city}</div>
+                      </div>
+                      <div className="flex-1 flex items-center justify-center">
+                        <div className="flex items-center space-x-2 text-gray-400">
+                          <div className="w-8 h-px bg-gray-400"></div>
+                          <Plane className="h-4 w-4" />
+                          <div className="w-8 h-px bg-gray-400"></div>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-white">{route.to.iata}</div>
+                        <div className="text-sm text-gray-400">{route.to.city}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Flights:</span>
+                        <span className="text-orange-400 font-semibold">{route.flightCount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Distance:</span>
+                        <span className="text-white">{route.distance} mi</span>
+                      </div>
+                      <div className="mt-3">
+                        <div className="text-gray-400 text-xs mb-1">Popular Airlines:</div>
+                        <div className="flex flex-wrap gap-1">
+                          {route.popularAirlines.map((airline, i) => (
+                            <span key={i} className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">
+                              {airline}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <span className="text-sm text-gray-400">{rating} • {reviews} reviews</span>
+          )}
+
+          {activeTab === 'users' && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Top Aviators</h2>
+                <div className="flex items-center space-x-2 text-sm text-gray-400">
+                  <Trophy className="h-4 w-4" />
+                  <span>Ranked by flights logged this month</span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {popularUsers.map((user, index) => (
+                  <div key={user.id} className="card hover:bg-gray-800/80 transition-colors cursor-pointer">
+                    <div className="flex items-center space-x-4 mb-4">
+                      <div className="relative">
+                        {user.profilePicture ? (
+                          <Image
+                            src={user.profilePicture}
+                            alt={user.username}
+                            width={64}
+                            height={64}
+                            className="rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xl font-semibold">
+                              {user.username.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                          #{index + 1}
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">@{user.username}</h3>
+                        <div className="text-sm text-gray-400">{user.totalFlights} flights</div>
+                        <div className="text-sm text-orange-400">Level {user.level}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="text-sm text-gray-400">Recent Badges:</div>
+                      <div className="flex flex-wrap gap-1">
+                        {user.badges.map((badge, i) => (
+                          <span key={i} className="px-2 py-1 bg-gradient-to-r from-orange-500/20 to-yellow-500/20 border border-orange-500/30 rounded text-xs text-orange-300">
+                            {badge}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'airports' && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Popular Airports</h2>
+                <div className="flex items-center space-x-2 text-sm text-gray-400">
+                  <Globe className="h-4 w-4" />
+                  <span>Most visited this month</span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {featuredAirports.map((airport, index) => (
+                  <div key={airport.iata} className="card hover:bg-gray-800/80 transition-colors cursor-pointer">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-white">{airport.iata}</h3>
+                        <div className="text-gray-400">{airport.city}, {airport.country}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-orange-400">{airport.recentFlights}</div>
+                        <div className="text-xs text-gray-400">recent flights</div>
+                      </div>
+                    </div>
+                    
+                    <h4 className="font-semibold text-white mb-2">{airport.name}</h4>
+                    
+                    <div className="space-y-2">
+                      <div className="text-sm text-gray-400">Popular with:</div>
+                      <div className="flex flex-wrap gap-1">
+                        {airport.popularWith.map((group, i) => (
+                          <span key={i} className="px-2 py-1 bg-blue-500/20 border border-blue-500/30 rounded text-xs text-blue-300">
+                            {group}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'aircraft' && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Popular Aircraft</h2>
+                <div className="flex items-center space-x-2 text-sm text-gray-400">
+                  <Plane className="h-4 w-4" />
+                  <span>Most flown aircraft types</span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {aircraftTypes.map((aircraft, index) => (
+                  <div key={aircraft.type} className="card hover:bg-gray-800/80 transition-colors cursor-pointer">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-white">{aircraft.type}</h3>
+                        <div className="text-sm text-gray-400">{aircraft.flights} flights logged</div>
+                      </div>
+                      <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center">
+                        <Plane className="h-8 w-8 text-gray-400" />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="text-sm text-gray-400">Popular Airlines:</div>
+                      <div className="flex flex-wrap gap-1">
+                        {aircraft.airlines.map((airline, i) => (
+                          <span key={i} className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">
+                            {airline}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Call to Action */}
+        <div className="mt-12 text-center">
+          <div className="card max-w-2xl mx-auto">
+            <h3 className="text-2xl font-bold text-white mb-4">Join the Community</h3>
+            <p className="text-gray-300 mb-6">
+              Start logging your flights and become part of the aviation community
+            </p>
+            <Link href="/flights/new" className="btn-primary">
+              Log Your First Flight
+            </Link>
           </div>
         </div>
       </div>

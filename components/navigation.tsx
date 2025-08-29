@@ -40,9 +40,9 @@ export function Navigation({ currentPath }: NavigationProps) {
   };
 
   const navItems = [
-    { icon: Home, label: 'Feed', href: '/feed', active: currentPath === '/feed' },
+    { icon: Home, label: 'Feed', href: '/feed', active: currentPath === '/feed' || currentPath === '/' },
     { icon: Search, label: 'Explore', href: '/explore', active: currentPath === '/explore' },
-    { icon: Plus, label: 'Log Flight', href: '/flights/new', active: currentPath === '/flights/new' },
+    { icon: Plus, label: 'Log Flight', href: '/flights/new', active: currentPath === '/flights/new' || currentPath.startsWith('/flights') },
     { icon: Bell, label: 'Notifications', href: '/notifications', active: currentPath === '/notifications' },
   ];
 
