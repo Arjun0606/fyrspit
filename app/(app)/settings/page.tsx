@@ -125,17 +125,17 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Settings</h1>
-          <p className="text-gray-400">Manage your account and preferences</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">Settings</h1>
+          <p className="text-gray-400 text-sm sm:text-base">Manage your account and preferences</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="card">
+            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6 shadow-lg">
               <nav className="space-y-2">
                 {[
                   { id: 'profile', label: 'Profile', icon: User },
@@ -163,7 +163,7 @@ export default function SettingsPage() {
           {/* Content */}
           <div className="lg:col-span-3">
             {activeTab === 'profile' && (
-              <div className="card">
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6 shadow-lg">
                 <h2 className="text-xl font-semibold text-white mb-6">Profile Information</h2>
                 
                 <div className="space-y-6">
@@ -179,7 +179,7 @@ export default function SettingsPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         Age
@@ -242,7 +242,7 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'notifications' && (
-              <div className="card">
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6 shadow-lg">
                 <h2 className="text-xl font-semibold text-white mb-6">Notification Preferences</h2>
                 
                 <div className="space-y-6">
@@ -326,7 +326,7 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'privacy' && (
-              <div className="card">
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6 shadow-lg">
                 <h2 className="text-xl font-semibold text-white mb-6">Privacy Settings</h2>
                 
                 <div className="space-y-6">
@@ -389,7 +389,7 @@ export default function SettingsPage() {
 
             {activeTab === 'account' && (
               <div className="space-y-6">
-                <div className="card">
+                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6 shadow-lg">
                   <h2 className="text-xl font-semibold text-white mb-6">Account Actions</h2>
                   
                   <div className="space-y-4">
