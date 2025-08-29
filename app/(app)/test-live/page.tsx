@@ -41,9 +41,10 @@ export default function TestLivePage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 p-4">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-4">🔴 LIVE Flight Data Test</h1>
-          <p className="text-gray-400">Real-time flight data from AviationStack + OpenSky Network</p>
-          <p className="text-orange-400 text-sm mt-2">⚡ NO DATABASE - All data fetched live!</p>
+          <h1 className="text-3xl font-bold text-white mb-4">🕷️ Google Flight Scraper Test</h1>
+          <p className="text-gray-400">Scraping flight data directly from Google search results</p>
+          <p className="text-orange-400 text-sm mt-2">⚡ Just like AI agents do - scrapes the flight card from Google!</p>
+          <p className="text-green-400 text-xs mt-1">Primary: Google Scraping | Fallback: Live APIs</p>
         </div>
 
         {/* Test Input */}
@@ -71,7 +72,7 @@ export default function TestLivePage() {
         {loading && (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-            <p className="text-gray-400">Fetching real-time flight data...</p>
+            <p className="text-gray-400">Scraping Google for flight data...</p>
           </div>
         )}
 
@@ -94,7 +95,7 @@ export default function TestLivePage() {
                 <h2 className="text-2xl font-bold text-white">{flightData.flightNumber}</h2>
                 <div className="flex items-center space-x-2 text-green-400">
                   <span className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
-                  <span className="text-sm font-medium">LIVE DATA</span>
+                  <span className="text-sm font-medium">SCRAPED FROM GOOGLE</span>
                 </div>
               </div>
               
