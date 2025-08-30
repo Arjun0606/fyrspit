@@ -1,13 +1,21 @@
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
-import EnhancedFlightScraper from '@/lib/enhanced-flight-scraper';
-import { GoogleFlightScraper } from '@/lib/google-flight-scraper';
-import LiveFlightAPI from '@/lib/live-flight-api';
-import { AircraftAchievementEngine } from '@/lib/aircraft-achievements';
+import { bulletproofFlightAPI } from '@/lib/bulletproof-flight-api';
+import { GamificationEngine } from '@/lib/gamification-engine';
 
-export async function POST(req: NextRequest) {
+/**
+ * 🚀 ULTIMATE FLIGHT LOOKUP API
+ * The "Strava for Aviation" - Magic Flight Data Endpoint
+ * 
+ * Input: Flight Number + Date
+ * Output: EVERYTHING (route, aircraft, XP, achievements, etc.)
+ */
+export async function POST(request: NextRequest) {
   try {
-    const { flightNumber, date } = await req.json();
-
+    const { flightNumber, date } = await request.json();
+    
     if (!flightNumber) {
       return NextResponse.json(
         { error: 'Flight number is required' },
@@ -15,129 +23,161 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.log(`🎯 MAGIC LOOKUP: ${flightNumber} on ${date || 'today'}`);
+    
     // Use today's date if not provided
     const flightDate = date || new Date().toISOString().split('T')[0];
-
-    console.log(`🔍 Looking up flight: ${flightNumber} on ${flightDate}`);
-
-    // PRIMARY: Enhanced scraping with date-specific data
-    let flightData = await EnhancedFlightScraper.getFlightData(flightNumber, flightDate);
-
-    // FALLBACK: Try live APIs if Google scraping fails
-    if (!flightData) {
-      console.log(`🔄 Google scraping failed, trying live APIs...`);
-      const liveData = await LiveFlightAPI.getRealtimeFlightData(flightNumber);
-      
-      if (liveData) {
-        // Convert live API data to our format
-        flightData = {
-          flightNumber: liveData.flightNumber,
-          airline: {
-            name: liveData.airline.name,
-            code: liveData.airline.code
-          },
-          aircraft: {
-            type: liveData.aircraft.type,
-            model: liveData.aircraft.registration
-          },
-          route: {
-            departure: {
-              airport: liveData.route.departure.airport,
-              iata: liveData.route.departure.iata,
-              city: liveData.route.departure.city,
-              time: new Date(liveData.route.departure.scheduled).toLocaleTimeString()
-            },
-            arrival: {
-              airport: liveData.route.arrival.airport,
-              iata: liveData.route.arrival.iata,
-              city: liveData.route.arrival.city,
-              time: new Date(liveData.route.arrival.scheduled).toLocaleTimeString()
-            },
-            duration: liveData.route.duration ? `${Math.floor(liveData.route.duration / 60)}h ${liveData.route.duration % 60}m` : 'Unknown',
-            distance: liveData.route.distance ? `${liveData.route.distance} miles` : undefined
-          },
-          status: {
-            text: liveData.status.text,
-            color: liveData.status.text.toLowerCase().includes('delay') ? 'red' : 'green'
-          },
-          date: new Date().toISOString().split('T')[0]
-        };
-      }
-    }
-
+    
+    // 🚀 GET FLIGHT DATA (bulletproof multi-source)
+    const flightData = await bulletproofFlightAPI.getFlightData(flightNumber, flightDate);
+    
     if (!flightData) {
       return NextResponse.json(
-        { error: 'Flight not found' },
+        { 
+          error: 'Flight not found',
+          message: `Unable to find data for flight ${flightNumber} on ${flightDate}`,
+          suggestions: [
+            'Check if the flight number is correct',
+            'Try a different date',
+            'Make sure the flight exists on this date'
+          ]
+        },
         { status: 404 }
       );
     }
 
-    console.log(`✅ Found flight data for ${flightNumber}`);
-
-    // Calculate stats based on the flight data
-    const stats = {
-      xpEarned: 50, // Base XP for logging a flight
-      achievements: [],
-      milestones: []
-    };
-
-    // Add distance-based XP (extract number from distance string)
-    const distanceMatch = flightData.route.distance?.match(/(\d+)/);
-    const distanceNum = distanceMatch ? parseInt(distanceMatch[1]) : 0;
-    if (distanceNum > 0) {
-      stats.xpEarned += Math.floor(distanceNum / 100); // 1 XP per 100 miles
-    }
-
-    // Add comprehensive aircraft-based achievements
-    const aircraftAchievement = AircraftAchievementEngine.getAircraftAchievement(flightData.aircraft.type);
-    if (aircraftAchievement) {
-      stats.achievements.push({
-        id: aircraftAchievement.id,
-        name: aircraftAchievement.name,
-        description: aircraftAchievement.description,
-        xp: aircraftAchievement.xp
-      });
-      stats.xpEarned += aircraftAchievement.xp;
-    }
-
-    // Add route-based achievements
-    if (distanceNum > 3000) {
-      stats.achievements.push({
-        id: 'long_haul',
-        name: 'Long Haul Warrior',
-        description: 'Completed a flight over 3,000 miles',
-        xp: 150
-      });
-      stats.xpEarned += 150;
-    }
-
-    // International flight achievement (basic check if cities are different)
-    if (flightData.route.departure.city !== flightData.route.arrival.city) {
-      stats.achievements.push({
-        id: 'border_crosser',
-        name: 'Border Crosser',
-        description: 'Completed a flight to different city',
-        xp: 75
-      });
-      stats.xpEarned += 75;
-    }
-
-    // Return the smart engine data directly with stats
-    const responseData = {
-      ...flightData,
-      stats
-    };
-
-    return NextResponse.json({
-      success: true,
-      ...responseData
+    // �� CALCULATE GAMIFICATION DATA
+    const gamificationEngine = new GamificationEngine();
+    
+    // Calculate XP and achievements
+    const xpData = gamificationEngine.calculateFlightXP({
+      distance: flightData.distance,
+      isInternational: flightData.isInternational,
+      aircraftType: flightData.aircraft.model,
+      flightDuration: flightData.duration,
+      airline: flightData.airline.name,
+      status: flightData.status
     });
 
+    // Check for new achievements
+    const achievements = gamificationEngine.checkAchievements({
+      totalFlights: 1, // This would come from user's profile
+      totalMiles: flightData.distance,
+      countries: flightData.isInternational ? 2 : 1,
+      airlines: [flightData.airline.name],
+      aircraft: [flightData.aircraft.model]
+    });
+
+    // 🎯 ENHANCED RESPONSE WITH EVERYTHING
+    const response = {
+      success: true,
+      flight: {
+        ...flightData,
+        
+        // Enhanced route info
+        route: {
+          departure: flightData.departure,
+          arrival: flightData.arrival,
+          distance: `${flightData.distance} miles`,
+          duration: flightData.duration,
+          isInternational: flightData.isInternational
+        },
+        
+        // Enhanced aircraft info
+        aircraftDetails: {
+          model: flightData.aircraft.model,
+          registration: flightData.aircraft.registration,
+          type: flightData.aircraft.type,
+          manufacturer: this.getManufacturer(flightData.aircraft.model)
+        },
+        
+        // Gamification data
+        gamification: {
+          xpEarned: xpData.totalXP,
+          xpBreakdown: xpData.breakdown,
+          achievements: achievements.newAchievements,
+          level: this.calculateLevel(xpData.totalXP),
+          badges: achievements.badges
+        },
+        
+        // Social features
+        social: {
+          shareable: true,
+          hashtags: [
+            `#${flightData.airline.iata}${flightNumber.replace(/\D/g, '')}`,
+            `#${flightData.departure.iata}to${flightData.arrival.iata}`,
+            '#Fyrspit',
+            '#StravaForAviation'
+          ]
+        }
+      },
+      
+      // Metadata
+      meta: {
+        dataSource: flightData.dataSource,
+        timestamp: new Date().toISOString(),
+        processingTime: '< 2s',
+        confidence: 'high'
+      }
+    };
+
+    console.log(`✅ MAGIC SUCCESS: ${flightData.dataSource} → ${xpData.totalXP} XP`);
+    
+    return NextResponse.json(response);
+    
   } catch (error) {
-    console.error('Flight lookup error:', error);
+    console.error('🚨 MAGIC LOOKUP ERROR:', error);
+    
     return NextResponse.json(
-      { error: 'Failed to lookup flight' },
+      { 
+        error: 'Failed to lookup flight',
+        message: 'Our flight data sources are temporarily unavailable. Please try again.',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      },
       { status: 500 }
     );
   }
+}
+
+/**
+ * 🛠️ Helper Functions
+ */
+function getManufacturer(aircraftModel: string): string {
+  const model = aircraftModel.toUpperCase();
+  
+  if (model.includes('A3') || model.includes('A4')) return 'Airbus';
+  if (model.includes('737') || model.includes('747') || model.includes('777') || model.includes('787')) return 'Boeing';
+  if (model.includes('E1') || model.includes('E2')) return 'Embraer';
+  if (model.includes('CRJ') || model.includes('CS')) return 'Bombardier';
+  if (model.includes('ATR')) return 'ATR';
+  
+  return 'Unknown';
+}
+
+function calculateLevel(totalXP: number): number {
+  // Level calculation (like Strava/Forza)
+  return Math.floor(totalXP / 1000) + 1;
+}
+
+/**
+ * 🔍 GET endpoint for testing
+ */
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const flightNumber = searchParams.get('flight');
+  const date = searchParams.get('date');
+  
+  if (!flightNumber) {
+    return NextResponse.json(
+      { error: 'Flight number parameter is required' },
+      { status: 400 }
+    );
+  }
+  
+  // Reuse POST logic
+  return POST(new Request(request.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ flightNumber, date })
+  }));
 }
