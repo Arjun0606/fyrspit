@@ -50,7 +50,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [activeTab, setActiveTab] = useState<'flights' | 'stats' | 'achievements'>('flights');
+  const [activeTab, setActiveTab] = useState<'flights' | 'stats' | 'collections' | 'achievements'>('flights');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -122,6 +122,33 @@ export default function ProfilePage() {
       </div>
     );
   }
+
+  // Compute collections from saved flights
+  const collections = (() => {
+    const countries = new Set<string>();
+    const airports = new Set<string>();
+    const airlines = new Set<string>();
+    const aircraftModels = new Set<string>();
+    const manufacturers = new Set<string>();
+
+    for (const f of flights) {
+      if ((f as any).route?.from?.iata) airports.add((f as any).route.from.iata);
+      if ((f as any).route?.to?.iata) airports.add((f as any).route.to.iata);
+      if ((f as any).route?.from?.city) countries.add((f as any).route.from.city);
+      if ((f as any).route?.to?.city) countries.add((f as any).route.to.city);
+      if (f.airline?.name) airlines.add(f.airline.name);
+      if (f.aircraft?.model) aircraftModels.add(f.aircraft.model);
+      if (f.aircraft?.manufacturer) manufacturers.add(f.aircraft.manufacturer);
+    }
+
+    return {
+      countries: Array.from(countries).sort(),
+      airports: Array.from(airports).sort(),
+      airlines: Array.from(airlines).sort(),
+      aircraftModels: Array.from(aircraftModels).sort(),
+      manufacturers: Array.from(manufacturers).sort(),
+    };
+  })();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
@@ -229,6 +256,7 @@ export default function ProfilePage() {
             {[
               { id: 'flights', label: 'Flights', icon: Plane },
               { id: 'stats', label: 'Statistics', icon: Trophy },
+              { id: 'collections', label: 'Collections', icon: Users },
               { id: 'achievements', label: 'Achievements', icon: Users },
             ].map(({ id, label, icon: Icon }) => (
               <button
@@ -341,6 +369,75 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'collections' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="card">
+              <h3 className="text-lg font-semibold mb-4">Countries Unlocked ({collections.countries.length})</h3>
+              {collections.countries.length === 0 ? (
+                <p className="text-gray-400 text-sm">Log flights to unlock countries.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {collections.countries.map((c) => (
+                    <span key={c} className="px-2 py-1 bg-orange-500/20 border border-orange-500/30 rounded text-xs text-orange-300">{c}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="card">
+              <h3 className="text-lg font-semibold mb-4">Airports Unlocked ({collections.airports.length})</h3>
+              {collections.airports.length === 0 ? (
+                <p className="text-gray-400 text-sm">Log flights to unlock airports.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {collections.airports.map((a) => (
+                    <span key={a} className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">{a}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="card">
+              <h3 className="text-lg font-semibold mb-4">Airlines Unlocked ({collections.airlines.length})</h3>
+              {collections.airlines.length === 0 ? (
+                <p className="text-gray-400 text-sm">Log flights to unlock airlines.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {collections.airlines.map((al) => (
+                    <span key={al} className="px-2 py-1 bg-blue-500/20 border border-blue-500/30 rounded text-xs text-blue-300">{al}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="card">
+              <h3 className="text-lg font-semibold mb-4">Aircraft Unlocked ({collections.aircraftModels.length})</h3>
+              {collections.aircraftModels.length === 0 ? (
+                <p className="text-gray-400 text-sm">Log flights to unlock aircraft.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {collections.aircraftModels.map((m) => (
+                    <span key={m} className="px-2 py-1 bg-purple-500/20 border border-purple-500/30 rounded text-xs text-purple-300">{m}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="card lg:col-span-2">
+              <h3 className="text-lg font-semibold mb-4">Manufacturers Unlocked ({collections.manufacturers.length})</h3>
+              {collections.manufacturers.length === 0 ? (
+                <p className="text-gray-400 text-sm">Log flights to unlock manufacturers.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {collections.manufacturers.map((man) => (
+                    <span key={man} className="px-2 py-1 bg-green-500/20 border border-green-500/30 rounded text-xs text-green-300">{man}</span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
