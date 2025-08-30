@@ -1,3 +1,5 @@
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 /**
  * LIVE GOOGLE SCRAPING TEST ENDPOINT
  * Actually visits Google and scrapes real flight data

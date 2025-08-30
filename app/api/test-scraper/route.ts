@@ -1,3 +1,5 @@
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
