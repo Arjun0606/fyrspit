@@ -4,9 +4,12 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Plane, Zap, Users, Trophy, ArrowRight, CheckCircle } from 'lucide-react'
 
+import { PWAInstallPrompt } from '@/components/pwa-install-prompt';
+
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
+    <PWAInstallPrompt />
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
       {/* Navigation */}
       <nav className="absolute top-0 w-full z-50 p-4 sm:p-6">
         <div className="container mx-auto flex justify-between items-center">

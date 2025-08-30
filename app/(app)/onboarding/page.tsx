@@ -22,6 +22,7 @@ interface OnboardingData {
   travelStyle: string;
   privacyLevel: string;
   interests: string[];
+  bio?: string;
 }
 
 export default function OnboardingPage() {
@@ -43,7 +44,8 @@ export default function OnboardingPage() {
     favoriteAirlines: [],
     travelStyle: '',
     privacyLevel: 'public',
-    interests: []
+    interests: [],
+    bio: ''
   });
 
   useEffect(() => {
@@ -147,6 +149,7 @@ export default function OnboardingPage() {
         travelStyle: data.travelStyle,
         'privacy.defaultVisibility': data.privacyLevel,
         interests: data.interests,
+        bio: (data.bio || '').trim(),
         updatedAt: new Date().toISOString()
       });
 
@@ -272,7 +275,21 @@ export default function OnboardingPage() {
                       </p>
                     )}
                   </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Bio (optional)</label>
+                  <textarea
+                    rows={3}
+                    maxLength={200}
+                    placeholder="Tell others about your flying style, favorite routes, or aircraft..."
+                    className="w-full px-4 sm:px-6 py-3 sm:py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 text-base sm:text-lg"
+                    value={data.bio || }
+                    onChange={(e) => setData({...data, bio: e.target.value})}
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Up to 200 characters</p>
                 </div>
+
+</div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
