@@ -35,6 +35,7 @@ export const airportsDatabase: Airport[] = [
   { code: 'PNQ', name: 'Pune Airport', city: 'Pune', country: 'India', region: 'Asia', timezone: 'Asia/Kolkata', coordinates: { lat: 18.5822, lng: 73.9197 } },
   { code: 'AMD', name: 'Sardar Vallabhbhai Patel International Airport', city: 'Ahmedabad', country: 'India', region: 'Asia', timezone: 'Asia/Kolkata', coordinates: { lat: 23.0773, lng: 72.6347 } },
   { code: 'GOI', name: 'Goa International Airport', city: 'Goa', country: 'India', region: 'Asia', timezone: 'Asia/Kolkata', coordinates: { lat: 15.3808, lng: 73.8314 } },
+  { code: 'GOX', name: 'Manohar International Airport (Mopa)', city: 'Goa', country: 'India', region: 'Asia', timezone: 'Asia/Kolkata', coordinates: { lat: 15.7350, lng: 73.8180 } },
   { code: 'COK', name: 'Cochin International Airport', city: 'Kochi', country: 'India', region: 'Asia', timezone: 'Asia/Kolkata', coordinates: { lat: 10.1520, lng: 76.4019 } },
   
   // European Airports
