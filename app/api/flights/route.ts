@@ -11,6 +11,20 @@ function formatDuration(minutes: number): string {
   return `${h}h ${m}m`;
 }
 
+function coerceTimeString(input: any): string {
+  if (!input) return '';
+  if (typeof input === 'string') return input;
+  // Some providers send { local, utc }
+  if (typeof input === 'object') {
+    return String(input.local || input.utc || '');
+  }
+  try {
+    return String(input);
+  } catch {
+    return '';
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization') || '';
@@ -58,8 +72,8 @@ export async function POST(req: NextRequest) {
       },
       timing: {
         scheduled: {
-          departure: scheduled?.departure || '',
-          arrival: scheduled?.arrival || '',
+          departure: coerceTimeString(scheduled?.departure),
+          arrival: coerceTimeString(scheduled?.arrival),
         },
         duration: formatDuration(durationMin),
       },
