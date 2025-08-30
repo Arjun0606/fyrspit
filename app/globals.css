@@ -103,6 +103,11 @@ body {
   .text-truncate-mobile {
     @apply truncate sm:overflow-visible sm:whitespace-normal;
   }
+
+  /* Allow horizontal scroll for tight tab bars on mobile */
+  .tabs-scroll {
+    @apply overflow-x-auto whitespace-nowrap -mx-4 px-4;
+  }
   
   /* Mobile-safe margins */
   .safe-margin {

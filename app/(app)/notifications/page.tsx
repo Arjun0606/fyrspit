@@ -16,49 +16,8 @@ interface Notification {
 export default function NotificationsPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
 
-  // Mock notifications - in production, these would come from the database
-  const notifications: Notification[] = [
-    {
-      id: '1',
-      type: 'achievement',
-      title: 'New Badge Earned!',
-      message: 'You earned the "First Flight" badge for logging your first flight',
-      timestamp: '2 hours ago',
-      read: false
-    },
-    {
-      id: '2',
-      type: 'social',
-      title: '@aviation_pro followed you',
-      message: 'aviation_pro started following your flight journey',
-      timestamp: '5 hours ago',
-      read: false
-    },
-    {
-      id: '3',
-      type: 'flight',
-      title: 'Flight Reminder',
-      message: 'Don\'t forget to log your recent AA123 flight from LAX to JFK',
-      timestamp: '1 day ago',
-      read: true
-    },
-    {
-      id: '4',
-      type: 'achievement',
-      title: 'Level Up!',
-      message: 'Congratulations! You\'ve reached Level 2',
-      timestamp: '2 days ago',
-      read: true
-    },
-    {
-      id: '5',
-      type: 'system',
-      title: 'New Feature: Flight Stats',
-      message: 'Check out the new detailed flight statistics in your profile',
-      timestamp: '3 days ago',
-      read: true
-    }
-  ];
+  // No dummy notifications: empty until real backend wires in
+  const notifications: Notification[] = [];
 
   const filteredNotifications = activeTab === 'unread' 
     ? notifications.filter(n => !n.read)
@@ -105,7 +64,7 @@ export default function NotificationsPage() {
 
         {/* Tabs */}
         <div className="border-b border-gray-700 mb-6">
-          <nav className="flex space-x-8">
+          <nav className="tabs-scroll flex space-x-8">
             {[
               { id: 'all', label: 'All', count: notifications.length },
               { id: 'unread', label: 'Unread', count: notifications.filter(n => !n.read).length },

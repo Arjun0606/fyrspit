@@ -35,88 +35,14 @@ export default function ExplorePage() {
   const [activeTab, setActiveTab] = useState<'routes' | 'users' | 'airports' | 'aircraft'>('routes');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Mock data - in production, these would come from APIs
-  const trendingRoutes: TrendingRoute[] = [
-    {
-      from: { iata: 'LAX', city: 'Los Angeles', country: 'USA' },
-      to: { iata: 'JFK', city: 'New York', country: 'USA' },
-      flightCount: 245,
-      distance: 2475,
-      popularAirlines: ['American', 'Delta', 'JetBlue']
-    },
-    {
-      from: { iata: 'LHR', city: 'London', country: 'UK' },
-      to: { iata: 'DXB', city: 'Dubai', country: 'UAE' },
-      flightCount: 189,
-      distance: 3414,
-      popularAirlines: ['Emirates', 'British Airways']
-    },
-    {
-      from: { iata: 'BOM', city: 'Mumbai', country: 'India' },
-      to: { iata: 'BLR', city: 'Bangalore', country: 'India' },
-      flightCount: 156,
-      distance: 537,
-      popularAirlines: ['Akasa Air', 'IndiGo', 'Air India']
-    }
-  ];
+  // No dummy data placeholders
+  const trendingRoutes: TrendingRoute[] = [];
 
-  const popularUsers: PopularUser[] = [
-    {
-      id: '1',
-      username: 'aviation_pro',
-      totalFlights: 150,
-      level: 8,
-      badges: ['Globe Trotter', 'Sky Explorer', 'Frequent Flyer']
-    },
-    {
-      id: '2',
-      username: 'pilot_sarah',
-      totalFlights: 89,
-      level: 6,
-      badges: ['Aircraft Expert', 'Route Master']
-    },
-    {
-      id: '3',
-      username: 'world_traveler',
-      totalFlights: 67,
-      level: 5,
-      badges: ['Country Collector', 'Airport Hunter']
-    }
-  ];
+  const popularUsers: PopularUser[] = [];
 
-  const featuredAirports: FeaturedAirport[] = [
-    {
-      iata: 'SIN',
-      name: 'Singapore Changi Airport',
-      city: 'Singapore',
-      country: 'Singapore',
-      recentFlights: 89,
-      popularWith: ['Frequent Flyers', 'Business Travelers']
-    },
-    {
-      iata: 'NRT',
-      name: 'Tokyo Narita International',
-      city: 'Tokyo',
-      country: 'Japan',
-      recentFlights: 76,
-      popularWith: ['Aviation Enthusiasts', 'Culture Explorers']
-    },
-    {
-      iata: 'CDG',
-      name: 'Charles de Gaulle Airport',
-      city: 'Paris',
-      country: 'France',
-      recentFlights: 65,
-      popularWith: ['Leisure Travelers', 'Food Lovers']
-    }
-  ];
+  const featuredAirports: FeaturedAirport[] = [];
 
-  const aircraftTypes = [
-    { type: 'Boeing 737', flights: 234, airlines: ['Southwest', 'American', 'United'] },
-    { type: 'Airbus A320', flights: 198, airlines: ['JetBlue', 'American', 'Delta'] },
-    { type: 'Boeing 777', flights: 145, airlines: ['Emirates', 'United', 'British Airways'] },
-    { type: 'Airbus A350', flights: 87, airlines: ['Qatar', 'Singapore', 'Lufthansa'] }
-  ];
+  const aircraftTypes: { type: string; flights: number; airlines: string[] }[] = [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
@@ -141,7 +67,7 @@ export default function ExplorePage() {
 
         {/* Tabs */}
         <div className="border-b border-gray-700 mb-8">
-          <nav className="flex justify-center space-x-8">
+          <nav className="tabs-scroll flex justify-center space-x-8">
             {[
               { id: 'routes', label: 'Trending Routes', icon: TrendingUp },
               { id: 'users', label: 'Top Aviators', icon: Users },
@@ -176,6 +102,9 @@ export default function ExplorePage() {
                 </button>
               </div>
               
+              {trendingRoutes.length === 0 ? (
+                <div className="text-gray-400">No data yet. This section will populate from live stats.</div>
+              ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {trendingRoutes.map((route, index) => (
                   <div key={index} className="card hover:bg-gray-800/80 transition-colors cursor-pointer">
@@ -220,6 +149,7 @@ export default function ExplorePage() {
                   </div>
                 ))}
               </div>
+              )}
             </div>
           )}
 
@@ -233,6 +163,9 @@ export default function ExplorePage() {
                 </div>
               </div>
               
+              {popularUsers.length === 0 ? (
+                <div className="text-gray-400">No users to show yet.</div>
+              ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {popularUsers.map((user, index) => (
                   <div key={user.id} className="card hover:bg-gray-800/80 transition-colors cursor-pointer">
@@ -277,6 +210,7 @@ export default function ExplorePage() {
                   </div>
                 ))}
               </div>
+              )}
             </div>
           )}
 
@@ -290,6 +224,9 @@ export default function ExplorePage() {
                 </div>
               </div>
               
+              {featuredAirports.length === 0 ? (
+                <div className="text-gray-400">No airports to show yet.</div>
+              ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {featuredAirports.map((airport, index) => (
                   <div key={airport.iata} className="card hover:bg-gray-800/80 transition-colors cursor-pointer">
@@ -319,6 +256,7 @@ export default function ExplorePage() {
                   </div>
                 ))}
               </div>
+              )}
             </div>
           )}
 
@@ -332,6 +270,9 @@ export default function ExplorePage() {
                 </div>
               </div>
               
+              {aircraftTypes.length === 0 ? (
+                <div className="text-gray-400">No aircraft data yet.</div>
+              ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {aircraftTypes.map((aircraft, index) => (
                   <div key={aircraft.type} className="card hover:bg-gray-800/80 transition-colors cursor-pointer">
@@ -358,6 +299,7 @@ export default function ExplorePage() {
                   </div>
                 ))}
               </div>
+              )}
             </div>
           )}
         </div>

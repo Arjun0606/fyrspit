@@ -6,6 +6,7 @@ import { Plane, Clock, MapPin, AlertCircle } from 'lucide-react';
 export default function TestLivePage() {
   const [flightNumber, setFlightNumber] = useState('');
   const [flightData, setFlightData] = useState<any>(null);
+  const [flightDate, setFlightDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -20,7 +21,7 @@ export default function TestLivePage() {
       const response = await fetch('/api/flights/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ flightNumber: flightNumber.toUpperCase() })
+        body: JSON.stringify({ flightNumber: flightNumber.toUpperCase(), date: flightDate })
       });
 
       const data = await response.json();
@@ -49,7 +50,7 @@ export default function TestLivePage() {
 
         {/* Test Input */}
         <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-6 mb-6">
-          <div className="flex gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
             <input
               type="text"
               placeholder="Enter flight number (e.g., QR123, EK456, AA789)"
@@ -57,6 +58,12 @@ export default function TestLivePage() {
               value={flightNumber}
               onChange={(e) => setFlightNumber(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && testFlight()}
+            />
+            <input
+              type="date"
+              className="px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              value={flightDate}
+              onChange={(e) => setFlightDate(e.target.value)}
             />
             <button
               onClick={testFlight}

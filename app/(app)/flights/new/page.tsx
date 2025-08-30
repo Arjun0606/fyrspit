@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
-import { ArrowLeft, Plane, Zap, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plane, Zap, Loader2, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -13,6 +13,7 @@ export default function NewFlightPage() {
   const router = useRouter();
   const [flightNumber, setFlightNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [flightDate, setFlightDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [flightData, setFlightData] = useState<any>(null);
 
   const handleFlightLookup = async () => {
@@ -34,7 +35,8 @@ export default function NewFlightPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          flightNumber: flightNumber.trim().toUpperCase()
+          flightNumber: flightNumber.trim().toUpperCase(),
+          date: flightDate
         }),
       });
 
@@ -43,26 +45,28 @@ export default function NewFlightPage() {
       }
 
       const result = await response.json();
-      setFlightData(result);
+      setFlightData(result.flight || result);
 
       // Show success with flight details
-      if (result.route) {
-        toast.success(`✈️ ${result.route.from.city} → ${result.route.to.city}`, { duration: 3000 });
+      if ((result.flight && result.flight.route) || result.route) {
+        const r = result.flight?.route || result.route;
+        const fromCity = r.departure?.city || r.from?.city || '';
+        const toCity = r.arrival?.city || r.to?.city || '';
+        toast.success(`✈️ ${fromCity} → ${toCity}`.trim(), { duration: 3000 });
       }
       
-      if (result.aircraft) {
-        toast.success(`🛩️ ${result.aircraft.manufacturer} ${result.aircraft.model}`, { duration: 2500 });
+      if (result.flight?.aircraft || result.aircraft) {
+        const a = result.flight?.aircraft || result.aircraft;
+        toast.success(`🛩️ ${a.manufacturer || ''} ${a.model || ''}`.trim(), { duration: 2500 });
       }
 
-      if (result.airline) {
-        toast.success(`🏢 ${result.airline.name}`, { duration: 2000 });
+      if (result.flight?.airline || result.airline) {
+        const al = result.flight?.airline || result.airline;
+        toast.success(`🏢 ${al.name}`, { duration: 2000 });
       }
 
-      // Show stats that will be earned
-      if (result.stats) {
-        toast.success(`🎯 +${result.stats.xpEarned} XP • ${result.stats.milesFlown} miles`, { 
-          duration: 4000 
-        });
+      if (result.flight?.gamification?.xpEarned) {
+        toast.success(`🎯 +${result.flight.gamification.xpEarned} XP`, { duration: 3000 });
       }
 
     } catch (error: any) {
@@ -128,7 +132,7 @@ export default function NewFlightPage() {
         </Link>
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold">Log a Flight</h1>
-          <p className="text-gray-400 text-sm sm:text-base">Enter any flight number → Get everything automatically</p>
+          <p className="text-gray-400 text-sm sm:text-base">Enter flight number + date → Get everything automatically</p>
         </div>
       </div>
 
@@ -161,6 +165,16 @@ export default function NewFlightPage() {
               </div>
             </div>
             
+            <div className="relative">
+              <input
+                type="date"
+                value={flightDate}
+                onChange={(e) => setFlightDate(e.target.value)}
+                className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+              <Calendar className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
+            </div>
+            
             <p className="text-sm text-gray-400 flex items-center">
               <Zap className="h-4 w-4 mr-2" />
               Powered by real-time flight data • No manual entry required
@@ -188,7 +202,7 @@ export default function NewFlightPage() {
 
             <div className="space-y-4">
               {/* Route */}
-              {flightData.route && (
+              {flightData?.route && (
                 <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
                   <div className="text-center">
                     <div className="text-2xl font-bold">{flightData.route.from.iata}</div>
@@ -210,21 +224,21 @@ export default function NewFlightPage() {
 
               {/* Flight Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {flightData.airline && (
+                {flightData?.airline && (
                   <div className="p-3 bg-gray-800 rounded-lg">
                     <div className="text-sm text-gray-400">Airline</div>
                     <div className="font-semibold">{flightData.airline.name}</div>
                   </div>
                 )}
                 
-                {flightData.aircraft && (
+                {flightData?.aircraft && (
                   <div className="p-3 bg-gray-800 rounded-lg">
                     <div className="text-sm text-gray-400">Aircraft</div>
                     <div className="font-semibold">{flightData.aircraft.manufacturer} {flightData.aircraft.model}</div>
                   </div>
                 )}
                 
-                {flightData.route && (
+                {flightData?.route && (
                   <>
                     <div className="p-3 bg-gray-800 rounded-lg">
                       <div className="text-sm text-gray-400">Distance</div>

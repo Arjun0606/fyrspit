@@ -18,33 +18,12 @@ interface LeaderboardEntry {
 export default function LeaderboardsPage() {
   const [activeTab, setActiveTab] = useState<'flights' | 'miles' | 'countries' | 'hours'>('flights');
 
-  // Mock leaderboard data
+  // No dummy data: show empty state until real leaderboards are implemented
   const leaderboards = {
-    flights: [
-      { rank: 1, userId: '1', username: 'aviation_pro', value: 247, change: 0, badges: ['Globe Trotter', 'Sky Master'], level: 12 },
-      { rank: 2, userId: '2', username: 'pilot_sarah', value: 189, change: 1, badges: ['Frequent Flyer'], level: 9 },
-      { rank: 3, userId: '3', username: 'world_explorer', value: 156, change: -1, badges: ['Country Collector'], level: 8 },
-      { rank: 4, userId: '4', username: 'sky_wanderer', value: 134, change: 0, badges: ['Airport Hunter'], level: 7 },
-      { rank: 5, userId: '5', username: 'flight_master', value: 127, change: 2, badges: ['Route Expert'], level: 7 },
-      { rank: 6, userId: '6', username: 'jet_setter', value: 98, change: -1, badges: ['Business Class'], level: 6 },
-      { rank: 7, userId: '7', username: 'cabin_crew_mike', value: 87, change: 0, badges: ['First Flight'], level: 5 },
-      { rank: 8, userId: '8', username: 'travel_bug', value: 76, change: 1, badges: ['Weekend Warrior'], level: 5 },
-    ],
-    miles: [
-      { rank: 1, userId: '1', username: 'aviation_pro', value: 487239, change: 0, badges: ['Globe Trotter'], level: 12 },
-      { rank: 2, userId: '3', username: 'world_explorer', value: 423156, change: 1, badges: ['Country Collector'], level: 8 },
-      { rank: 3, userId: '2', username: 'pilot_sarah', value: 398745, change: -1, badges: ['Frequent Flyer'], level: 9 },
-    ],
-    countries: [
-      { rank: 1, userId: '3', username: 'world_explorer', value: 47, change: 0, badges: ['Country Collector'], level: 8 },
-      { rank: 2, userId: '1', username: 'aviation_pro', value: 43, change: 0, badges: ['Globe Trotter'], level: 12 },
-      { rank: 3, userId: '6', username: 'jet_setter', value: 28, change: 1, badges: ['Business Class'], level: 6 },
-    ],
-    hours: [
-      { rank: 1, userId: '1', username: 'aviation_pro', value: 1247, change: 0, badges: ['Sky Master'], level: 12 },
-      { rank: 2, userId: '2', username: 'pilot_sarah', value: 987, change: 0, badges: ['Frequent Flyer'], level: 9 },
-      { rank: 3, userId: '4', username: 'sky_wanderer', value: 856, change: 1, badges: ['Airport Hunter'], level: 7 },
-    ]
+    flights: [] as LeaderboardEntry[],
+    miles: [] as LeaderboardEntry[],
+    countries: [] as LeaderboardEntry[],
+    hours: [] as LeaderboardEntry[],
   };
 
   const currentLeaderboard = leaderboards[activeTab];
@@ -102,7 +81,7 @@ export default function LeaderboardsPage() {
 
         {/* Tabs */}
         <div className="border-b border-gray-700 mb-8">
-          <nav className="flex justify-center space-x-8">
+          <nav className="tabs-scroll flex justify-center space-x-8">
             {[
               { id: 'flights', label: 'Total Flights', icon: Plane },
               { id: 'miles', label: 'Miles Flown', icon: MapPin },
@@ -180,6 +159,9 @@ export default function LeaderboardsPage() {
         <div className="card">
           <h2 className="text-xl font-semibold text-white mb-6">Full Rankings</h2>
           
+          {currentLeaderboard.length === 0 ? (
+            <div className="text-gray-400">No rankings yet. Log real flights to appear here.</div>
+          ) : (
           <div className="space-y-3">
             {currentLeaderboard.map((entry) => (
               <div 
@@ -230,6 +212,7 @@ export default function LeaderboardsPage() {
               </div>
             ))}
           </div>
+          )}
         </div>
 
         {/* Your Rank */}
