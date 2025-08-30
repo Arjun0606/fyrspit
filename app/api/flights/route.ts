@@ -1,42 +1,65 @@
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
-import { createFlight } from '@/server/actions/flight-actions';
-import { CreateFlightSchema } from '@/types';
+import { getAuth } from 'firebase-admin/auth';
+import { adminDb } from '@/lib/firebase-admin';
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    // Get auth token from header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
+    const authHeader = req.headers.get('authorization') || '';
+    const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!idToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    const token = authHeader.substring(7);
-    
-    // Parse and validate request body
-    const body = await request.json();
-    const validatedData = CreateFlightSchema.parse(body);
-    
-    // Create the flight
-    const result = await createFlight(validatedData, token);
-    
-    return NextResponse.json(result, { status: 201 });
-  } catch (error: any) {
-    console.error('API Error creating flight:', error);
-    
-    if (error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
-        { status: 400 }
-      );
+    const auth = getAuth();
+    const decoded = await auth.verifyIdToken(idToken);
+
+    const body = await req.json();
+    const {
+      flightNumber,
+      airline,
+      aircraft,
+      from,
+      to,
+      scheduled,
+      distanceMi,
+      durationMinutes,
+      visibility = 'public',
+      reviewShort = '',
+      date,
+    } = body || {};
+
+    // Minimal validation
+    if (!flightNumber || !from?.iata || !to?.iata) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
-    
-    return NextResponse.json(
-      { error: error.message || 'Failed to create flight' },
-      { status: 500 }
-    );
+
+    // Build document (drop undefineds)
+    const docPayload: any = {
+      userId: decoded.uid,
+      flightNumber,
+      airline: airline || {},
+      aircraft: aircraft || {},
+      route: {
+        from: { iata: from?.iata, city: from?.city || '', airport: from?.airport || '' },
+        to: { iata: to?.iata, city: to?.city || '', airport: to?.airport || '' },
+        distance: typeof distanceMi === 'number' ? distanceMi : 0,
+        duration: typeof durationMinutes === 'number' ? durationMinutes : 0,
+      },
+      scheduled: scheduled || {},
+      visibility,
+      reviewShort,
+      date: date || new Date().toISOString().slice(0, 10),
+      createdAt: new Date(),
+    };
+
+    // Remove undefined recursively
+    const clean = JSON.parse(JSON.stringify(docPayload));
+
+    const ref = await adminDb.collection('flights').add(clean);
+    return NextResponse.json({ flightId: ref.id });
+  } catch (err: any) {
+    return NextResponse.json({ error: err?.message || 'Failed to save flight' }, { status: 500 });
   }
 }
 

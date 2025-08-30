@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { adminDb } from './firebase-admin';
+import { getAirportByCode } from './airports-database';
 
 export interface EnrichInput {
   flightNo: string;
@@ -145,10 +146,32 @@ function parseAeroDataBox(data: any, flightNo: string, date: string): EnrichedFl
   const depAirport = dep.airport || dep;
   const arrAirport = arr.airport || arr;
 
-  const depLat = depAirport?.location?.lat || depAirport?.latitude;
-  const depLon = depAirport?.location?.lon || depAirport?.longitude;
-  const arrLat = arrAirport?.location?.lat || arrAirport?.latitude;
-  const arrLon = arrAirport?.location?.lon || arrAirport?.longitude;
+  let depLat = depAirport?.location?.lat || depAirport?.latitude as number | undefined;
+  let depLon = depAirport?.location?.lon || depAirport?.longitude as number | undefined;
+  let arrLat = arrAirport?.location?.lat || arrAirport?.latitude as number | undefined;
+  let arrLon = arrAirport?.location?.lon || arrAirport?.longitude as number | undefined;
+
+  // IATA-based coordinate fallback using our airports database
+  if (typeof depLat !== 'number' || typeof depLon !== 'number') {
+    const depCode = depAirport?.iata || depAirport?.iataCode || dep?.iata || '';
+    const depLookup = depCode ? getAirportByCode(depCode) : undefined;
+    if (depLookup) {
+      depLat = depLookup.coordinates.lat;
+      depLon = depLookup.coordinates.lng;
+      if (!depAirport?.city) (depAirport as any).city = depLookup.city;
+      if (!depAirport?.country && !(depAirport as any).countryName) (depAirport as any).countryName = depLookup.country;
+    }
+  }
+  if (typeof arrLat !== 'number' || typeof arrLon !== 'number') {
+    const arrCode = arrAirport?.iata || arrAirport?.iataCode || arr?.iata || '';
+    const arrLookup = arrCode ? getAirportByCode(arrCode) : undefined;
+    if (arrLookup) {
+      arrLat = arrLookup.coordinates.lat;
+      arrLon = arrLookup.coordinates.lng;
+      if (!arrAirport?.city) (arrAirport as any).city = arrLookup.city;
+      if (!arrAirport?.country && !(arrAirport as any).countryName) (arrAirport as any).countryName = arrLookup.country;
+    }
+  }
 
   const distanceKm = (typeof depLat === 'number' && typeof depLon === 'number' && typeof arrLat === 'number' && typeof arrLon === 'number')
     ? haversineKm(depLat, depLon, arrLat, arrLon)
