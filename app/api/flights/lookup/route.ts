@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import EnhancedFlightScraper from '@/lib/enhanced-flight-scraper';
 import { GoogleFlightScraper } from '@/lib/google-flight-scraper';
 import LiveFlightAPI from '@/lib/live-flight-api';
 import { AircraftAchievementEngine } from '@/lib/aircraft-achievements';
 
 export async function POST(req: NextRequest) {
   try {
-    const { flightNumber } = await req.json();
+    const { flightNumber, date } = await req.json();
 
     if (!flightNumber) {
       return NextResponse.json(
@@ -14,10 +15,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log(`🔍 Looking up flight: ${flightNumber}`);
+    // Use today's date if not provided
+    const flightDate = date || new Date().toISOString().split('T')[0];
 
-    // PRIMARY: Scrape Google search results (most reliable!)
-    let flightData = await GoogleFlightScraper.scrapeFlightData(flightNumber);
+    console.log(`🔍 Looking up flight: ${flightNumber} on ${flightDate}`);
+
+    // PRIMARY: Enhanced scraping with date-specific data
+    let flightData = await EnhancedFlightScraper.getFlightData(flightNumber, flightDate);
 
     // FALLBACK: Try live APIs if Google scraping fails
     if (!flightData) {
