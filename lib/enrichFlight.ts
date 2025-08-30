@@ -101,6 +101,23 @@ async function callAeroDataBox(flightNo: string, date: string) {
   return resp.data;
 }
 
+// Fallback within AeroDataBox only: fetch all instances by number, then pick the provided date
+async function callAeroDataBoxByNumber(flightNo: string) {
+  const host = 'aerodatabox.p.rapidapi.com';
+  const url = `https://${host}/flights/number/${encodeURIComponent(flightNo)}?withLocation=false&withOperationalDays=true`;
+  const key = process.env.AERODATABOX_KEY;
+  if (!key) throw new Error('AERODATABOX_KEY not configured');
+  const resp = await axios.get(url, {
+    headers: {
+      'X-RapidAPI-Key': key,
+      'X-RapidAPI-Host': host,
+      'Accept': 'application/json'
+    },
+    timeout: 12000
+  });
+  return resp.data;
+}
+
 function parseAeroDataBox(data: any, flightNo: string, date: string): EnrichedFlight | null {
   const flight = Array.isArray(data) ? data[0] : (data?.[0] || data?.flights?.[0] || data);
   if (!flight) return null;
@@ -254,7 +271,23 @@ export async function enrichFlight(input: EnrichInput): Promise<EnrichedFlight |
     }
 
     const data = await callAeroDataBox(flightNo, date);
-    const parsed = parseAeroDataBox(data, flightNo, date);
+    let parsed = parseAeroDataBox(data, flightNo, date);
+
+    // If date endpoint returned empty, query by number and select the matching date
+    if (!parsed) {
+      const list = await callAeroDataBoxByNumber(flightNo);
+      if (Array.isArray(list) && list.length > 0) {
+        // Try to find an item with scheduled date equal to requested date (YYYY-MM-DD)
+        const pick = list.find((f: any) => {
+          const d = f?.departure?.scheduledTimeLocal || f?.departure?.scheduledTimeUtc || f?.scheduled?.departure;
+          if (!d) return false;
+          const ymd = String(d).slice(0, 10);
+          return ymd === date;
+        }) || list[0];
+        parsed = parseAeroDataBox([pick], flightNo, date);
+      }
+    }
+
     if (!parsed) return { error: true, message: 'Flight not found from AeroDataBox' };
 
     // Apply user-provided aircraft override
