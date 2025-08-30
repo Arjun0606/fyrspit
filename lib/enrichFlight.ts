@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { adminDb } from './firebase-admin';
-import { getAirportByCode, getAirportsByCity } from './airports-database';
+import { getAirportByCode, getAirportsByCity, distanceMiBetweenIata } from './airports-database';
 
 export interface EnrichInput {
   flightNo: string;
@@ -183,10 +183,17 @@ function parseAeroDataBox(data: any, flightNo: string, date: string): EnrichedFl
     }
   }
 
-  const distanceKm = (typeof depLat === 'number' && typeof depLon === 'number' && typeof arrLat === 'number' && typeof arrLon === 'number')
+  let distanceKm = (typeof depLat === 'number' && typeof depLon === 'number' && typeof arrLat === 'number' && typeof arrLon === 'number')
     ? haversineKm(depLat, depLon, arrLat, arrLon)
     : 0;
-  const distanceMi = Math.round(distanceKm * 0.621371);
+  let distanceMi = Math.round(distanceKm * 0.621371);
+  if (distanceMi <= 0 && depIata && arrIata) {
+    const mi = distanceMiBetweenIata(depIata, arrIata);
+    if (typeof mi === 'number' && mi > 0) {
+      distanceMi = mi;
+      distanceKm = Math.round(mi / 0.621371);
+    }
+  }
 
   const schedDep = dep?.scheduledTimeLocal || dep?.scheduledTime || dep?.scheduled || flight?.scheduled?.departure;
   const schedArr = arr?.scheduledTimeLocal || arr?.scheduledTime || arr?.scheduled || flight?.scheduled?.arrival;
@@ -343,8 +350,8 @@ export async function enrichFlight(input: EnrichInput): Promise<EnrichedFlight |
   const { flightNo, date, userId, aircraftManufacturer, aircraftModel, seatClass } = input;
   try {
     const cached = await getFromCache(flightNo, date);
-    if (cached) {
-      // Do not re-update stats on cache hit (frontend may choose to)
+    if (cached && (Number(cached.distanceMi) > 0 || Number(cached.durationMinutes) > 0)) {
+      // Healthy cache
       return cached;
     }
 

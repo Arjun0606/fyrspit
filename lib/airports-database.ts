@@ -36,7 +36,6 @@ export const airportsDatabase: Airport[] = [
   { code: 'AMD', name: 'Sardar Vallabhbhai Patel International Airport', city: 'Ahmedabad', country: 'India', region: 'Asia', timezone: 'Asia/Kolkata', coordinates: { lat: 23.0773, lng: 72.6347 } },
   { code: 'GOI', name: 'Goa International Airport', city: 'Goa', country: 'India', region: 'Asia', timezone: 'Asia/Kolkata', coordinates: { lat: 15.3808, lng: 73.8314 } },
   { code: 'GOX', name: 'Manohar International Airport (Mopa)', city: 'Goa', country: 'India', region: 'Asia', timezone: 'Asia/Kolkata', coordinates: { lat: 15.7350, lng: 73.8180 } },
-  { code: 'COK', name: 'Cochin International Airport', city: 'Kochi', country: 'India', region: 'Asia', timezone: 'Asia/Kolkata', coordinates: { lat: 10.1520, lng: 76.4019 } },
   
   // European Airports
   { code: 'CDG', name: 'Charles de Gaulle Airport', city: 'Paris', country: 'France', region: 'Europe', timezone: 'Europe/Paris', coordinates: { lat: 49.0097, lng: 2.5479 } },
@@ -137,4 +136,19 @@ export function getPopularAirports(): Airport[] {
     getAirportByCode('BLR')!,
     getAirportByCode('SIN')!,
   ];
+}
+
+export function distanceMiBetweenIata(fromIata: string, toIata: string): number | null {
+  const a = getAirportByCode(fromIata);
+  const b = getAirportByCode(toIata);
+  if (!a || !b) return null;
+  const R = 3958.7613; // miles
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.coordinates.lat - a.coordinates.lat);
+  const dLon = toRad(b.coordinates.lng - a.coordinates.lng);
+  const lat1 = toRad(a.coordinates.lat);
+  const lat2 = toRad(b.coordinates.lat);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  return Math.round(R * c);
 }
