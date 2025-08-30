@@ -209,6 +209,7 @@ async function updateUserStats(userId: string, flight: EnrichedFlight, extras?: 
   const airports: string[] = Array.from(new Set([...(base.uniqueAirports || []), flight.from.iata, flight.to.iata].filter(Boolean)));
   const airlines: string[] = Array.from(new Set([...(base.uniqueAirlines || []), flight.airline?.name].filter(Boolean)));
   const aircraftModels: string[] = Array.from(new Set([...(base.uniqueAircraftModels || []), flight.aircraft.model].filter(Boolean)));
+  const manufacturers: string[] = Array.from(new Set([...(base.uniqueManufacturers || []), flight.aircraft.manufacturer].filter(Boolean)));
 
   const longestDistanceMi = Math.max(base.longestDistanceMi || 0, flight.distanceMi || 0);
   const longestDurationMin = Math.max(base.longestDurationMin || 0, flight.durationMinutes || 0);
@@ -243,6 +244,7 @@ async function updateUserStats(userId: string, flight: EnrichedFlight, extras?: 
     uniqueAirports: airports,
     uniqueAirlines: airlines,
     uniqueAircraftModels: aircraftModels,
+    uniqueManufacturers: manufacturers,
     uniqueCountries: Array.from(uniqueCountries),
     uniqueCountriesCount: Array.from(uniqueCountries).length,
     longestDistanceMi,
@@ -259,6 +261,22 @@ async function updateUserStats(userId: string, flight: EnrichedFlight, extras?: 
     at: now,
     payload: { flightNumber: flight.flightNumber, date: flight.date, distanceMi: flight.distanceMi, durationMinutes: flight.durationMinutes, route: routeKey }
   });
+
+  // Mirror key stats to the user's public profile document for UI rendering
+  const level = Math.floor(xp / 1000) + 1;
+  await adminDb.collection('users').doc(userId).set({
+    stats: {
+      totalFlights,
+      totalMiles,
+      totalHours: Math.round(totalMinutes / 60),
+      level,
+      xp,
+      airportsVisited: airports.length,
+      countriesVisited: Array.from(uniqueCountries).length,
+      aircraftTypes: aircraftModels.length,
+      manufacturersUnlocked: manufacturers.length,
+    }
+  }, { merge: true });
 }
 
 export async function enrichFlight(input: EnrichInput): Promise<EnrichedFlight | { error: true; message: string }> {
