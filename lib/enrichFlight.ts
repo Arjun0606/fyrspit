@@ -178,6 +178,16 @@ function parseAeroDataBox(data: any, flightNo: string, date: string): EnrichedFl
     durationMinutes = Math.round((distanceKm / speed) * 60);
   }
 
+  // Guard against NaN or zero by estimating from distance
+  if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+    if (distanceKm > 0) {
+      const speed = inferCruiseSpeedKmH(aircraftModel);
+      durationMinutes = Math.max(1, Math.round((distanceKm / speed) * 60));
+    } else {
+      durationMinutes = 0;
+    }
+  }
+
   const enriched: EnrichedFlight = {
     flightNumber: flightNo.toUpperCase(),
     date,
