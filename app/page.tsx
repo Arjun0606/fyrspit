@@ -8,7 +8,8 @@ import { PWAInstallPrompt } from '@/components/pwa-install-prompt';
 
 export default function HomePage() {
   return (
-    <PWAInstallPrompt />
+    <>
+      <PWAInstallPrompt />
       <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
       {/* Navigation */}
       <nav className="absolute top-0 w-full z-50 p-4 sm:p-6">
