@@ -46,7 +46,7 @@ export default function HomePage() {
           </h1>
           
           <p className="text-base sm:text-lg lg:text-xl text-gray-300 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed px-2">
-            Like Letterboxd for aviation. Enter flight numbers → Get aircraft specs, route data, and unlock achievements. 
+            Strava for Aviation. Enter flight numbers → Get aircraft specs, route data, and unlock achievements. 
             Compare stats with friends. Build your flying legacy.
           </p>
 
@@ -90,7 +90,7 @@ export default function HomePage() {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">
-              Forza Horizon for Aviation
+              Strava for Aviation
             </h2>
             <p className="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto">
               Gamified flight tracking with real-time data and social features
