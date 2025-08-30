@@ -45,6 +45,22 @@ export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: numb
   return Math.round(R * c);
 }
 
+// Remove all undefined values recursively to make Firestore writes valid
+function sanitizeForFirestore<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((v) => sanitizeForFirestore(v)) as unknown as T;
+  }
+  if (value && typeof value === 'object') {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(value as Record<string, any>)) {
+      if (v === undefined) continue; // drop undefined
+      out[k] = sanitizeForFirestore(v);
+    }
+    return out as unknown as T;
+  }
+  return value;
+}
+
 function inferCruiseSpeedKmH(model?: string): number {
   if (!model) return SPEED_KMH.DEFAULT;
   const m = model.toUpperCase();
@@ -76,11 +92,12 @@ async function getFromCache(flightNo: string, date: string): Promise<EnrichedFli
 
 async function saveToCache(flightNo: string, date: string, payload: EnrichedFlight): Promise<void> {
   const id = keyForCache(flightNo, date);
+  const cleanPayload = sanitizeForFirestore(payload);
   await adminDb.collection(CACHE_COLLECTION).doc(id).set({
     key: id,
     flightNo: flightNo.toUpperCase(),
     date,
-    payload,
+    payload: cleanPayload,
     createdAt: new Date(),
   });
 }
@@ -259,7 +276,7 @@ async function updateUserStats(userId: string, flight: EnrichedFlight, extras?: 
     userId,
     type: 'flight_logged',
     at: now,
-    payload: { flightNumber: flight.flightNumber, date: flight.date, distanceMi: flight.distanceMi, durationMinutes: flight.durationMinutes, route: routeKey }
+    payload: sanitizeForFirestore({ flightNumber: flight.flightNumber, date: flight.date, distanceMi: flight.distanceMi, durationMinutes: flight.durationMinutes, route: routeKey })
   });
 
   // Mirror key stats to the user's public profile document for UI rendering
