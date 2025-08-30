@@ -18,10 +18,10 @@ export default function NewFlightPage() {
 
   const getSafeRoute = (data: any) => {
     const route = data?.route || {};
-    const dep = route.departure || route.from || data?.departure || {};
-    const arr = route.arrival || route.to || data?.arrival || {};
-    const distance = route.distance ?? data?.distance ?? 0;
-    const duration = route.duration ?? data?.duration ?? '';
+    const dep = route.departure || route.from || data?.departure || data?.from || {};
+    const arr = route.arrival || route.to || data?.arrival || data?.to || {};
+    const distance = route.distance ?? data?.distanceMi ?? data?.distance ?? 0;
+    const duration = route.duration ?? data?.durationMinutes ?? data?.duration ?? '';
     return { dep, arr, distance, duration };
   };
 
@@ -49,14 +49,15 @@ export default function NewFlightPage() {
     setIsLoading(true);
     
     try {
-      // Get comprehensive flight data
-      const response = await fetch('/api/flights/lookup', {
+      // Use paid AeroDataBox enrichment API
+      const response = await fetch('/api/enrichFlight', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          flightNumber: flightNumber.trim().toUpperCase(),
-          date: flightDate
-        }),
+        body: JSON.stringify({
+          flightNo: flightNumber.trim().toUpperCase(),
+          date: flightDate,
+          userId: user?.uid || 'anonymous'
+        })
       });
 
       if (!response.ok) {
@@ -64,28 +65,24 @@ export default function NewFlightPage() {
       }
 
       const result = await response.json();
-      setFlightData(result.flight || result);
+      setFlightData(result);
 
       // Show success with flight details
-      if ((result.flight && result.flight.route) || result.route) {
-        const r = result.flight?.route || result.route;
-        const fromCity = r?.departure?.city || r?.from?.city || r?.departure?.iata || r?.from?.iata || '';
-        const toCity = r?.arrival?.city || r?.to?.city || r?.arrival?.iata || r?.to?.iata || '';
+      {
+        const r = getSafeRoute(result);
+        const fromCity = r.dep?.city || r.dep?.iata || '';
+        const toCity = r.arr?.city || r.arr?.iata || '';
         toast.success(`✈️ ${fromCity} → ${toCity}`.trim(), { duration: 3000 });
       }
       
-      if (result.flight?.aircraft || result.aircraft) {
-        const a = result.flight?.aircraft || result.aircraft;
+      if (result?.aircraft) {
+        const a = result.aircraft;
         toast.success(`🛩️ ${a.manufacturer || ''} ${a.model || ''}`.trim(), { duration: 2500 });
       }
 
-      if (result.flight?.airline || result.airline) {
-        const al = result.flight?.airline || result.airline;
+      if (result?.airline) {
+        const al = result.airline;
         toast.success(`🏢 ${al.name}`, { duration: 2000 });
-      }
-
-      if (result.flight?.gamification?.xpEarned) {
-        toast.success(`🎯 +${result.flight.gamification.xpEarned} XP`, { duration: 3000 });
       }
 
     } catch (error: any) {
