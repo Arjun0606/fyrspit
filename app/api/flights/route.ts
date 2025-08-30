@@ -4,6 +4,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
 import { adminDb } from '@/lib/firebase-admin';
 
+function formatDuration(minutes: number): string {
+  if (!Number.isFinite(minutes) || minutes <= 0) return '0h 0m';
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return `${h}h ${m}m`;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization') || '';
@@ -34,6 +41,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const distance = typeof distanceMi === 'number' && distanceMi > 0 ? distanceMi : 0;
+    const durationMin = typeof durationMinutes === 'number' && durationMinutes > 0 ? durationMinutes : 0;
+
     // Build document (drop undefineds)
     const docPayload: any = {
       userId: decoded.uid,
@@ -41,12 +51,23 @@ export async function POST(req: NextRequest) {
       airline: airline || {},
       aircraft: aircraft || {},
       route: {
-        from: { iata: from?.iata, city: from?.city || '', airport: from?.airport || '' },
-        to: { iata: to?.iata, city: to?.city || '', airport: to?.airport || '' },
-        distance: typeof distanceMi === 'number' ? distanceMi : 0,
-        duration: typeof durationMinutes === 'number' ? durationMinutes : 0,
+        from: { iata: from?.iata, city: from?.city || '', name: from?.airport || '' },
+        to: { iata: to?.iata, city: to?.city || '', name: to?.airport || '' },
+        distance,
+        duration: durationMin,
       },
-      scheduled: scheduled || {},
+      timing: {
+        scheduled: {
+          departure: scheduled?.departure || '',
+          arrival: scheduled?.arrival || '',
+        },
+        duration: formatDuration(durationMin),
+      },
+      stats: {
+        miles: distance,
+        duration: Number.isFinite(durationMin) ? Math.round(durationMin / 60) : 0,
+        xpEarned: 50 + Math.floor(distance / 50),
+      },
       visibility,
       reviewShort,
       date: date || new Date().toISOString().slice(0, 10),
