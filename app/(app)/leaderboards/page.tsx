@@ -215,22 +215,15 @@ export default function LeaderboardsPage() {
           )}
         </div>
 
-        {/* Your Rank */}
-        <div className="mt-8 card bg-gradient-to-r from-orange-900/20 to-gray-800/50 border-orange-500/30">
-          <div className="flex items-center justify-between">
+        {/* No fake 'Your Rank' until we have real data */}
+        {currentLeaderboard.length === 0 && (
+          <div className="mt-8 card">
             <div className="flex items-center space-x-4">
-              <Trophy className="h-8 w-8 text-orange-500" />
-              <div>
-                <h3 className="text-white font-semibold">Your Current Rank</h3>
-                <p className="text-gray-400">Keep flying to climb the leaderboard!</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-orange-400">#42</div>
-              <div className="text-sm text-gray-400">12 {getValueLabel(activeTab)}</div>
+              <Trophy className="h-6 w-6 text-orange-500" />
+              <p className="text-gray-300">Log flights to enter the leaderboard.</p>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

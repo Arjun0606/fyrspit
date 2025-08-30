@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { bulletproofFlightAPI } from '@/lib/bulletproof-flight-api';
-import { GamificationEngine } from '@/lib/gamification-engine';
+// Gamification optional; keep response lightweight and real-time
 
 /**
  * 🚀 ULTIMATE FLIGHT LOOKUP API
@@ -46,82 +46,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // �� CALCULATE GAMIFICATION DATA
-    const gamificationEngine = new GamificationEngine();
-    
-    // Calculate XP and achievements
-    const xpData = gamificationEngine.calculateFlightXP({
-      distance: flightData.distance,
-      isInternational: flightData.isInternational,
-      aircraftType: flightData.aircraft.model,
-      flightDuration: flightData.duration,
-      airline: flightData.airline.name,
-      status: flightData.status
-    });
-
-    // Check for new achievements
-    const achievements = gamificationEngine.checkAchievements({
-      totalFlights: 1, // This would come from user's profile
-      totalMiles: flightData.distance,
-      countries: flightData.isInternational ? 2 : 1,
-      airlines: [flightData.airline.name],
-      aircraft: [flightData.aircraft.model]
-    });
-
-    // 🎯 ENHANCED RESPONSE WITH EVERYTHING
+    // 🎯 RESPONSE (no mocks; only real data). Keep structure stable for UI.
     const response = {
       success: true,
       flight: {
         ...flightData,
-        
-        // Enhanced route info
         route: {
           departure: flightData.departure,
           arrival: flightData.arrival,
-          distance: `${flightData.distance} miles`,
+          distance: flightData.distance,
           duration: flightData.duration,
           isInternational: flightData.isInternational
-        },
-        
-        // Enhanced aircraft info
-        aircraftDetails: {
-          model: flightData.aircraft.model,
-          registration: flightData.aircraft.registration,
-          type: flightData.aircraft.type,
-          manufacturer: this.getManufacturer(flightData.aircraft.model)
-        },
-        
-        // Gamification data
-        gamification: {
-          xpEarned: xpData.totalXP,
-          xpBreakdown: xpData.breakdown,
-          achievements: achievements.newAchievements,
-          level: this.calculateLevel(xpData.totalXP),
-          badges: achievements.badges
-        },
-        
-        // Social features
-        social: {
-          shareable: true,
-          hashtags: [
-            `#${flightData.airline.iata}${flightNumber.replace(/\D/g, '')}`,
-            `#${flightData.departure.iata}to${flightData.arrival.iata}`,
-            '#Fyrspit',
-            '#StravaForAviation'
-          ]
         }
       },
-      
-      // Metadata
       meta: {
         dataSource: flightData.dataSource,
-        timestamp: new Date().toISOString(),
-        processingTime: '< 2s',
-        confidence: 'high'
+        timestamp: new Date().toISOString()
       }
     };
 
-    console.log(`✅ MAGIC SUCCESS: ${flightData.dataSource} → ${xpData.totalXP} XP`);
+    console.log(`✅ LOOKUP SUCCESS: ${flightData.dataSource}`);
     
     return NextResponse.json(response);
     
@@ -137,26 +81,6 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-/**
- * 🛠️ Helper Functions
- */
-function getManufacturer(aircraftModel: string): string {
-  const model = aircraftModel.toUpperCase();
-  
-  if (model.includes('A3') || model.includes('A4')) return 'Airbus';
-  if (model.includes('737') || model.includes('747') || model.includes('777') || model.includes('787')) return 'Boeing';
-  if (model.includes('E1') || model.includes('E2')) return 'Embraer';
-  if (model.includes('CRJ') || model.includes('CS')) return 'Bombardier';
-  if (model.includes('ATR')) return 'ATR';
-  
-  return 'Unknown';
-}
-
-function calculateLevel(totalXP: number): number {
-  // Level calculation (like Strava/Forza)
-  return Math.floor(totalXP / 1000) + 1;
 }
 
 /**

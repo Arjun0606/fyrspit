@@ -85,6 +85,8 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
+      // If the email is already used by a Google account, Firebase throws auth/email-already-in-use.
+      // We surface a friendly prompt to use Google Sign-In instead of failing silently.
       const { user } = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       await updateProfile(user, { displayName: formData.name });
       await createUserDocument(user.uid, formData.email, formData.name);
@@ -93,6 +95,10 @@ export default function SignupPage() {
       router.push('/onboarding');
     } catch (error: any) {
       console.error('Signup error:', error);
+      if (error?.code === 'auth/email-already-in-use') {
+        toast.error('This email is already linked. Use “Continue with Google”.');
+        return;
+      }
       toast.error(error.message || 'Failed to create account');
     } finally {
       setIsLoading(false);

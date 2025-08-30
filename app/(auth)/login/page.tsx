@@ -26,7 +26,11 @@ export default function LoginPage() {
       router.push('/feed');
     } catch (error: any) {
       console.error('Login error:', error);
-      toast.error(error.message || 'Failed to log in');
+      if (error?.code === 'auth/user-not-found' || error?.code === 'auth/wrong-password') {
+        toast.error('Use “Continue with Google” if you signed up with Google.');
+      } else {
+        toast.error(error.message || 'Failed to log in');
+      }
     } finally {
       setIsLoading(false);
     }
