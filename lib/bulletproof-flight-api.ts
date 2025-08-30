@@ -87,24 +87,41 @@ class BulletproofFlightAPI {
   async getFlightData(flightNumber: string, date: string): Promise<FlightData | null> {
     console.log(`🚀 BULLETPROOF: Getting data for ${flightNumber} on ${date}`);
     
-    // Try each source until we get data
-    for (const source of this.sources) {
+    // Run all sources in parallel with a 10s cap; return the first complete result
+    const withTimeout = <T,>(p: Promise<T>, ms: number) => new Promise<T>((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('timeout')), ms);
+      p.then((v) => { clearTimeout(t); resolve(v); }).catch((e) => { clearTimeout(t); reject(e); });
+    });
+
+    const attempts = this.sources.map((source) => (async () => {
       try {
-        console.log(`🔍 Trying source: ${source}`);
+        console.log(`🔍 Trying source (parallel): ${source}`);
         const data = await this.trySource(source, flightNumber, date);
-        
-        if (data) {
+        if (data && data.departure?.iata && data.arrival?.iata) {
           console.log(`✅ SUCCESS from ${source}!`);
           return data;
         }
-      } catch (error) {
-        console.log(`❌ ${source} failed:`, error);
-        continue;
+        throw new Error(`${source} incomplete`);
+      } catch (e) {
+        throw e;
       }
+    })());
+
+    try {
+      // Prefer the fastest successful one
+      const result = await withTimeout(Promise.any(attempts), 10000);
+      return result as FlightData;
+    } catch {
+      console.log('Parallel attempts did not yield a complete result. Falling back to sequential.');
+      for (const source of this.sources) {
+        try {
+          const data = await this.trySource(source, flightNumber, date);
+          if (data) return data;
+        } catch {}
+      }
+      console.log(`💥 ALL SOURCES FAILED for ${flightNumber}`);
+      return null;
     }
-    
-    console.log(`💥 ALL SOURCES FAILED for ${flightNumber}`);
-    return null;
   }
 
   /**
