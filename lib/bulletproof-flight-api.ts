@@ -9,6 +9,12 @@
 import axios from 'axios';
 import { getAirportByCode } from './airports-database';
 
+// Track SERP usage across invocations (best-effort in serverless)
+declare global {
+  // eslint-disable-next-line no-var
+  var __serp_usage: { day: string; count: number } | undefined;
+}
+
 export interface FlightData {
   // Core Info
   flightNumber: string;
@@ -127,6 +133,11 @@ class BulletproofFlightAPI {
    * 🧠 METHOD 0: SERP provider (Serper.dev or SerpAPI) to get Google results in JSON
    */
   private async querySerp(flightNumber: string, date: string): Promise<FlightData | null> {
+    if (!this.canUseSerp()) {
+      console.log('SERP daily cap reached; skipping SERP and using fallbacks.');
+      return null;
+    }
+    this.recordSerpAttempt();
     const query = `${flightNumber} ${date} flight status`;
     const serperKey = process.env.SERPER_API_KEY;
     const serpapiKey = process.env.SERPAPI_API_KEY;
@@ -261,6 +272,28 @@ class BulletproofFlightAPI {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Soft cap for SERP calls. Set SERP_MAX_PER_DAY to override (default 150/day).
+   */
+  private canUseSerp(): boolean {
+    const maxPerDay = Number(process.env.SERP_MAX_PER_DAY || 150);
+    const today = new Date().toISOString().slice(0, 10);
+    const state = global.__serp_usage;
+    if (!state || state.day !== today) {
+      return true;
+    }
+    return state.count < maxPerDay;
+  }
+
+  private recordSerpAttempt(): void {
+    const today = new Date().toISOString().slice(0, 10);
+    if (!global.__serp_usage || global.__serp_usage.day !== today) {
+      global.__serp_usage = { day: today, count: 1 };
+      return;
+    }
+    global.__serp_usage.count += 1;
   }
 
   /**
