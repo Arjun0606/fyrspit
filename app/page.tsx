@@ -1,6 +1,5 @@
 'use client'
 // Force dynamic rendering
-export const dynamic = 'force-dynamic';
 import Link from 'next/link'
 import Image from 'next/image'
 import { Plane, Zap, Users, Trophy, ArrowRight, CheckCircle } from 'lucide-react'
