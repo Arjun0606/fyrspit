@@ -65,10 +65,11 @@ export interface FlightData {
 
 class BulletproofFlightAPI {
   private sources = [
+    'serp',
     'flightradar24',
-    'aviationstack', 
     'opensky',
-    'google_scrape'
+    'google_scrape',
+    'aviationstack'
   ];
 
   /**
@@ -103,11 +104,10 @@ class BulletproofFlightAPI {
   private async trySource(source: string, flightNumber: string, date: string): Promise<FlightData | null> {
     const clean = flightNumber.toUpperCase().replace(/\s|-/g, '');
     switch (source) {
+      case 'serp':
+        return await this.querySerp(clean, date);
       case 'flightradar24':
         return await this.scrapeFlightRadar24(clean, date);
-      
-      case 'aviationstack':
-        return await this.queryAviationStack(clean, date);
       
       case 'opensky':
         return await this.queryOpenSky(clean, date);
@@ -115,8 +115,151 @@ class BulletproofFlightAPI {
       case 'google_scrape':
         return await this.scrapeGoogle(clean, date);
       
+      case 'aviationstack':
+        return await this.queryAviationStack(clean, date);
+      
       default:
         return null;
+    }
+  }
+
+  /**
+   * 🧠 METHOD 0: SERP provider (Serper.dev or SerpAPI) to get Google results in JSON
+   */
+  private async querySerp(flightNumber: string, date: string): Promise<FlightData | null> {
+    const query = `${flightNumber} ${date} flight status`;
+    const serperKey = process.env.SERPER_API_KEY;
+    const serpapiKey = process.env.SERPAPI_API_KEY;
+
+    // Try Serper.dev first (lower cost)
+    if (serperKey) {
+      try {
+        const resp = await axios.post(
+          'https://google.serper.dev/search',
+          { q: query, gl: 'in', hl: 'en', num: 5 },
+          { headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json' }, timeout: 12000 }
+        );
+        const data = resp.data || {};
+        const parsed = this.parseSerpGeneric(data, flightNumber, date);
+        if (parsed) return { ...parsed, dataSource: 'Serper' };
+      } catch (e) {
+        console.log('Serper failed:', e);
+      }
+    }
+
+    // Fallback to SerpAPI
+    if (serpapiKey) {
+      try {
+        const url = `https://serpapi.com/search.json?engine=google&hl=en&gl=in&num=5&q=${encodeURIComponent(query)}&api_key=${encodeURIComponent(serpapiKey)}`;
+        const resp = await axios.get(url, { timeout: 12000, headers: { 'Accept': 'application/json' } });
+        const data = resp.data || {};
+        const parsed = this.parseSerpGeneric(data, flightNumber, date);
+        if (parsed) return { ...parsed, dataSource: 'SerpAPI' };
+      } catch (e) {
+        console.log('SerpAPI failed:', e);
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Parse SERP JSON (Serper/SerpAPI) generically for flight card signals.
+   */
+  private parseSerpGeneric(data: any, flightNumber: string, date: string): FlightData | null {
+    try {
+      const buckets: string[] = [];
+
+      // Serper fields
+      if (Array.isArray(data.organic)) {
+        for (const item of data.organic) {
+          if (item?.title) buckets.push(String(item.title));
+          if (item?.snippet) buckets.push(String(item.snippet));
+        }
+      }
+      if (data.answerBox) {
+        const ab = data.answerBox;
+        if (ab.title) buckets.push(String(ab.title));
+        if (ab.answer) buckets.push(String(ab.answer));
+        if (ab.snippet) buckets.push(String(ab.snippet));
+      }
+      if (data.knowledgeGraph) {
+        const kg = data.knowledgeGraph;
+        if (kg.title) buckets.push(String(kg.title));
+        if (kg.description) buckets.push(String(kg.description));
+      }
+
+      // SerpAPI fields
+      if (Array.isArray(data.organic_results)) {
+        for (const item of data.organic_results) {
+          if (item?.title) buckets.push(String(item.title));
+          if (item?.snippet) buckets.push(String(item.snippet));
+        }
+      }
+      if (data.answer_box) {
+        const ab = data.answer_box;
+        if (ab.title) buckets.push(String(ab.title));
+        if (ab.answer) buckets.push(String(ab.answer));
+        if (ab.snippet) buckets.push(String(ab.snippet));
+      }
+      if (data.knowledge_graph) {
+        const kg = data.knowledge_graph;
+        if (kg.title) buckets.push(String(kg.title));
+        if (kg.description) buckets.push(String(kg.description));
+      }
+
+      const text = buckets.join(' \n ');
+      if (!text) return null;
+
+      // Extract IATA codes and times
+      const iataMatches = text.match(/\b[A-Z]{3}\b/g) || [];
+      const timeMatches = text.match(/\b\d{1,2}:\d{2}\s*(?:AM|PM)?\b/gi) || [];
+      const airlineMatch = text.match(/(IndiGo|Qatar Airways|Emirates|Etihad|Air India|Vistara|Akasa|SpiceJet|United|Delta|American|British Airways|Lufthansa|KLM|Air France|Singapore Airlines|Cathay Pacific|Qantas|Ryanair|easyJet)/i);
+
+      const depIata = iataMatches[0] || '';
+      const arrIata = iataMatches[1] || '';
+      if (!depIata || !arrIata) return null;
+
+      const depTime = timeMatches[0] || '';
+      const arrTime = timeMatches[1] || '';
+      const duration = this.calculateDurationFromStrings(date, depTime, arrTime);
+      const distance = this.computeDistanceMiles(depIata, arrIata);
+
+      return {
+        flightNumber,
+        date,
+        departure: {
+          airport: depIata,
+          iata: depIata,
+          city: '',
+          country: '',
+          scheduledTime: this.combineDateTime(date, depTime),
+        },
+        arrival: {
+          airport: arrIata,
+          iata: arrIata,
+          city: '',
+          country: '',
+          scheduledTime: this.combineDateTime(date, arrTime),
+        },
+        airline: {
+          name: airlineMatch ? airlineMatch[1] : 'Unknown Airline',
+          iata: flightNumber.slice(0, 2),
+          icao: '',
+        },
+        aircraft: {
+          model: 'Unknown Aircraft',
+          type: 'Commercial',
+        },
+        status: 'scheduled',
+        duration,
+        distance,
+        xpValue: this.calculateXPFromValues(distance, duration, depIata, arrIata),
+        isInternational: this.isInternationalByIata(depIata, arrIata),
+        dataSource: 'SERP'
+      };
+    } catch {
+      return null;
     }
   }
 
@@ -581,6 +724,13 @@ class BulletproofFlightAPI {
     const arr = getAirportByCode(arrIata);
     if (!dep || !arr) return false;
     return dep.country !== arr.country;
+  }
+
+  private combineDateTime(date: string, time?: string): string {
+    if (!date || !time) return '';
+    // Normalize spacing and AM/PM formatting
+    const normalized = time.replace(/\s+/g, ' ').trim().toUpperCase();
+    return `${date} ${normalized}`;
   }
 
   private calculateXPFromValues(distance: number, durationStr: string, depIata?: string, arrIata?: string): number {
