@@ -283,7 +283,7 @@ export default function OnboardingPage() {
                     maxLength={200}
                     placeholder="Tell others about your flying style, favorite routes, or aircraft..."
                     className="w-full px-4 sm:px-6 py-3 sm:py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 text-base sm:text-lg"
-                    value={data.bio || }
+                    value={data.bio || ""}
                     onChange={(e) => setData({...data, bio: e.target.value})}
                   />
                   <p className="text-xs text-gray-400 mt-1">Up to 200 characters</p>
