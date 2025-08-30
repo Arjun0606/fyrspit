@@ -101,18 +101,19 @@ class BulletproofFlightAPI {
    * 🔄 Try a specific data source
    */
   private async trySource(source: string, flightNumber: string, date: string): Promise<FlightData | null> {
+    const clean = flightNumber.toUpperCase().replace(/\s|-/g, '');
     switch (source) {
       case 'flightradar24':
-        return await this.scrapeFlightRadar24(flightNumber, date);
+        return await this.scrapeFlightRadar24(clean, date);
       
       case 'aviationstack':
-        return await this.queryAviationStack(flightNumber, date);
+        return await this.queryAviationStack(clean, date);
       
       case 'opensky':
-        return await this.queryOpenSky(flightNumber, date);
+        return await this.queryOpenSky(clean, date);
       
       case 'google_scrape':
-        return await this.scrapeGoogle(flightNumber, date);
+        return await this.scrapeGoogle(clean, date);
       
       default:
         return null;

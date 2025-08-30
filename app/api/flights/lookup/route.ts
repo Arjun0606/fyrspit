@@ -23,13 +23,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`🎯 MAGIC LOOKUP: ${flightNumber} on ${date || 'today'}`);
+    // Normalize flight number (supports "6e 249", "6E249", etc.)
+    const normalizedFlight = String(flightNumber || '')
+      .toUpperCase()
+      .replace(/\s|-/g, '');
+    console.log(`🎯 MAGIC LOOKUP: ${normalizedFlight} on ${date || 'today'}`);
     
     // Use today's date if not provided
     const flightDate = date || new Date().toISOString().split('T')[0];
     
     // 🚀 GET FLIGHT DATA (bulletproof multi-source)
-    const flightData = await bulletproofFlightAPI.getFlightData(flightNumber, flightDate);
+    const flightData = await bulletproofFlightAPI.getFlightData(normalizedFlight, flightDate);
     
     if (!flightData) {
       return NextResponse.json(
