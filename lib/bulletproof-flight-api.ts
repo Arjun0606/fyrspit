@@ -233,7 +233,12 @@ class BulletproofFlightAPI {
       if (!text) return null;
 
       // Extract IATA codes and times
-      const iataMatches = text.match(/\b[A-Z]{3}\b/g) || [];
+      const rawIatas = text.match(/\b[A-Z]{3}\b/g) || [];
+      const iataMatches = rawIatas.filter((code: string) => {
+        const blacklist = new Set(['XML','RSS','PNG','JPG','SVG','CSS','HTML','JS','WWW','COM']);
+        if (blacklist.has(code)) return false;
+        return !!getAirportByCode(code);
+      });
       const timeMatches = text.match(/\b\d{1,2}:\d{2}\s*(?:AM|PM)?\b/gi) || [];
       const airlineMatch = text.match(/(IndiGo|Qatar Airways|Emirates|Etihad|Air India|Vistara|Akasa|SpiceJet|United|Delta|American|British Airways|Lufthansa|KLM|Air France|Singapore Airlines|Cathay Pacific|Qantas|Ryanair|easyJet)/i);
 
@@ -264,7 +269,7 @@ class BulletproofFlightAPI {
           scheduledTime: this.combineDateTime(date, arrTime),
         },
         airline: {
-          name: airlineMatch ? airlineMatch[1] : 'Unknown Airline',
+          name: airlineMatch ? airlineMatch[1] : this.inferAirlineFromPrefix(flightNumber),
           iata: flightNumber.slice(0, 2),
           icao: '',
         },
@@ -834,6 +839,32 @@ class BulletproofFlightAPI {
     // Normalize spacing and AM/PM formatting
     const normalized = time.replace(/\s+/g, ' ').trim().toUpperCase();
     return `${date} ${normalized}`;
+  }
+
+  private inferAirlineFromPrefix(flightNumber: string): string {
+    const prefix = flightNumber.slice(0, 2).toUpperCase();
+    const map: Record<string, string> = {
+      '6E': 'IndiGo',
+      'AI': 'Air India',
+      'UK': 'Vistara',
+      'QP': 'Akasa Air',
+      'SG': 'SpiceJet',
+      'G8': 'Go First',
+      'EK': 'Emirates',
+      'QR': 'Qatar Airways',
+      'EY': 'Etihad Airways',
+      'BA': 'British Airways',
+      'LH': 'Lufthansa',
+      'AF': 'Air France',
+      'KL': 'KLM',
+      'SQ': 'Singapore Airlines',
+      'CX': 'Cathay Pacific',
+      'QF': 'Qantas',
+      'UA': 'United Airlines',
+      'DL': 'Delta Air Lines',
+      'AA': 'American Airlines'
+    };
+    return map[prefix] || 'Unknown Airline';
   }
 
   private calculateXPFromValues(distance: number, durationStr: string, depIata?: string, arrIata?: string): number {
