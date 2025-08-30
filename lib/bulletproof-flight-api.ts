@@ -72,9 +72,12 @@ export interface FlightData {
 class BulletproofFlightAPI {
   private sources = [
     'serp',
+    'bing_scrape',
+    'duck_scrape',
     'flightradar24',
     'opensky',
     'google_scrape',
+    'trip_scrape',
     'aviationstack'
   ];
 
@@ -112,6 +115,10 @@ class BulletproofFlightAPI {
     switch (source) {
       case 'serp':
         return await this.querySerp(clean, date);
+      case 'bing_scrape':
+        return await this.scrapeBing(clean, date);
+      case 'duck_scrape':
+        return await this.scrapeDuckDuckGo(clean, date);
       case 'flightradar24':
         return await this.scrapeFlightRadar24(clean, date);
       
@@ -120,6 +127,9 @@ class BulletproofFlightAPI {
       
       case 'google_scrape':
         return await this.scrapeGoogle(clean, date);
+      
+      case 'trip_scrape':
+        return await this.scrapeTripDotCom(clean, date);
       
       case 'aviationstack':
         return await this.queryAviationStack(clean, date);
@@ -428,9 +438,49 @@ class BulletproofFlightAPI {
       });
 
       const html = response.data;
-      return this.parseGoogleHTML(html, flightNumber, date);
+      return this.parseGenericHTML(html, flightNumber, date, 'Google');
     } catch (error) {
       console.log('Google scraping failed:', error);
+      return null;
+    }
+  }
+
+  private async scrapeBing(flightNumber: string, date: string): Promise<FlightData | null> {
+    try {
+      const searchQuery = `${flightNumber} ${date} flight status`;
+      const url = `https://www.bing.com/search?q=${encodeURIComponent(searchQuery)}&cc=IN&setlang=en`;
+      const response = await axios.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5'
+        },
+        timeout: 10000
+      });
+      const html = response.data;
+      return this.parseGenericHTML(html, flightNumber, date, 'Bing');
+    } catch (error) {
+      console.log('Bing scraping failed:', error);
+      return null;
+    }
+  }
+
+  private async scrapeDuckDuckGo(flightNumber: string, date: string): Promise<FlightData | null> {
+    try {
+      const searchQuery = `${flightNumber} ${date} flight status`;
+      const url = `https://duckduckgo.com/html/?q=${encodeURIComponent(searchQuery)}&kl=wt-wt&ia=web`;
+      const response = await axios.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5'
+        },
+        timeout: 10000
+      });
+      const html = response.data;
+      return this.parseGenericHTML(html, flightNumber, date, 'DuckDuckGo');
+    } catch (error) {
+      console.log('DuckDuckGo scraping failed:', error);
       return null;
     }
   }
@@ -553,7 +603,7 @@ class BulletproofFlightAPI {
     };
   }
 
-  private parseGoogleHTML(html: string, flightNumber: string, date: string): FlightData | null {
+  private parseGenericHTML(html: string, flightNumber: string, date: string, sourceLabel: string): FlightData | null {
     try {
       // Enhanced Google parsing with multiple patterns
       const patterns = {
@@ -634,13 +684,33 @@ class BulletproofFlightAPI {
           distance,
           xpValue: this.calculateXPFromValues(distance, duration, depIata, arrIata),
           isInternational: this.isInternationalByIata(depIata, arrIata),
-          dataSource: 'Google'
+          dataSource: sourceLabel
         };
       }
 
       return null;
     } catch (error) {
-      console.log('Google HTML parsing failed:', error);
+      console.log(`${sourceLabel} HTML parsing failed:`, error);
+      return null;
+    }
+  }
+
+  private async scrapeTripDotCom(flightNumber: string, date: string): Promise<FlightData | null> {
+    try {
+      // Try Trip.com flight status path; if structure differs, we still parse generically
+      const url = `https://www.trip.com/flights/status-${encodeURIComponent(flightNumber)}/?date=${encodeURIComponent(date)}`;
+      const response = await axios.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5'
+        },
+        timeout: 12000
+      });
+      const html = response.data;
+      return this.parseGenericHTML(html, flightNumber, date, 'Trip.com');
+    } catch (error) {
+      console.log('Trip.com scraping failed:', error);
       return null;
     }
   }
