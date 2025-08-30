@@ -16,6 +16,25 @@ export default function NewFlightPage() {
   const [flightDate, setFlightDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [flightData, setFlightData] = useState<any>(null);
 
+  const getSafeRoute = (data: any) => {
+    const route = data?.route || {};
+    const dep = route.departure || route.from || data?.departure || {};
+    const arr = route.arrival || route.to || data?.arrival || {};
+    const distance = route.distance ?? data?.distance ?? 0;
+    const duration = route.duration ?? data?.duration ?? '';
+    return { dep, arr, distance, duration };
+  };
+
+  const formatDuration = (d: any) => {
+    if (typeof d === 'number' && Number.isFinite(d)) {
+      const h = Math.floor(d / 60);
+      const m = d % 60;
+      return `${h}h ${m}m`;
+    }
+    if (typeof d === 'string') return d;
+    return '';
+  };
+
   const handleFlightLookup = async () => {
     if (!flightNumber.trim()) {
       toast.error('Please enter a flight number');
@@ -50,8 +69,8 @@ export default function NewFlightPage() {
       // Show success with flight details
       if ((result.flight && result.flight.route) || result.route) {
         const r = result.flight?.route || result.route;
-        const fromCity = r.departure?.city || r.from?.city || '';
-        const toCity = r.arrival?.city || r.to?.city || '';
+        const fromCity = r?.departure?.city || r?.from?.city || r?.departure?.iata || r?.from?.iata || '';
+        const toCity = r?.arrival?.city || r?.to?.city || r?.arrival?.iata || r?.to?.iata || '';
         toast.success(`✈️ ${fromCity} → ${toCity}`.trim(), { duration: 3000 });
       }
       
@@ -202,11 +221,11 @@ export default function NewFlightPage() {
 
             <div className="space-y-4">
               {/* Route */}
-              {flightData?.route && (
+              {(() => { const r = getSafeRoute(flightData); return (
                 <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
                   <div className="text-center">
-                    <div className="text-2xl font-bold">{flightData.route.from.iata}</div>
-                    <div className="text-sm text-gray-400">{flightData.route.from.city}</div>
+                    <div className="text-2xl font-bold">{r.dep?.iata || '—'}</div>
+                    <div className="text-sm text-gray-400">{r.dep?.city || r.dep?.airport || ''}</div>
                   </div>
                   <div className="flex-1 flex items-center justify-center">
                     <div className="flex items-center space-x-2 text-gray-400">
@@ -216,11 +235,11 @@ export default function NewFlightPage() {
                     </div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold">{flightData.route.to.iata}</div>
-                    <div className="text-sm text-gray-400">{flightData.route.to.city}</div>
+                    <div className="text-2xl font-bold">{r.arr?.iata || '—'}</div>
+                    <div className="text-sm text-gray-400">{r.arr?.city || r.arr?.airport || ''}</div>
                   </div>
                 </div>
-              )}
+              ); })()}
 
               {/* Flight Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -238,46 +257,31 @@ export default function NewFlightPage() {
                   </div>
                 )}
                 
-                {flightData?.route && (
+                {(() => { const r = getSafeRoute(flightData); return (
                   <>
                     <div className="p-3 bg-gray-800 rounded-lg">
                       <div className="text-sm text-gray-400">Distance</div>
-                      <div className="font-semibold">{flightData.route.distance} miles</div>
+                      <div className="font-semibold">{r.distance || 0} miles</div>
                     </div>
-                    
                     <div className="p-3 bg-gray-800 rounded-lg">
                       <div className="text-sm text-gray-400">Flight Time</div>
-                      <div className="font-semibold">
-                        {Math.floor(flightData.route.duration / 60)}h {flightData.route.duration % 60}m
-                      </div>
+                      <div className="font-semibold">{formatDuration(r.duration)}</div>
                     </div>
                   </>
-                )}
+                ); })()}
               </div>
 
               {/* Stats Preview */}
-              {flightData.stats && (
+              {(() => { const r = getSafeRoute(flightData); const xp = flightData?.gamification?.xpEarned; if (xp || r.distance) return (
                 <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
                   <div className="text-sm text-orange-400 mb-2">You'll earn:</div>
                   <div className="flex items-center space-x-4">
-                    <div className="text-lg font-bold text-orange-300">
-                      +{flightData.stats.xpEarned} XP
-                    </div>
+                    {xp ? (<div className="text-lg font-bold text-orange-300">+{xp} XP</div>) : null}
                     <div className="text-gray-300">•</div>
-                    <div className="text-lg font-bold text-orange-300">
-                      {flightData.stats.milesFlown} miles
-                    </div>
-                    {flightData.stats.newAchievements?.length > 0 && (
-                      <>
-                        <div className="text-gray-300">•</div>
-                        <div className="text-sm text-yellow-400">
-                          🏆 {flightData.stats.newAchievements.length} new achievement{flightData.stats.newAchievements.length > 1 ? 's' : ''}
-                        </div>
-                      </>
-                    )}
+                    <div className="text-lg font-bold text-orange-300">{r.distance || 0} miles</div>
                   </div>
                 </div>
-              )}
+              ); return null; })()}
 
               {/* Save Button */}
               <button
