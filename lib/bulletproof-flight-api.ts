@@ -679,9 +679,33 @@ class BulletproofFlightAPI {
 
       // Build flight data from extracted info (fallback tolerant)
       if ((results.airport && results.airport.length >= 2) || results.departure || results.arrival) {
-        // Derive IATA codes (first two matches)
-        const depIata = results.airport?.[0] || (results.departure?.[0]?.match(/\b[A-Z]{3}\b/)?.[0] ?? '');
-        const arrIata = results.airport?.[1] || (results.arrival?.[0]?.match(/\b[A-Z]{3}\b/)?.[0] ?? '');
+        // Derive candidate IATA codes
+        const rawCandidates: string[] = [];
+        if (Array.isArray(results.airport)) rawCandidates.push(...results.airport);
+        const depMatchFromText = results.departure?.[0]?.match(/\b[A-Z]{3}\b/)?.[0];
+        const arrMatchFromText = results.arrival?.[0]?.match(/\b[A-Z]{3}\b/)?.[0];
+        if (depMatchFromText) rawCandidates.push(depMatchFromText);
+        if (arrMatchFromText) rawCandidates.push(arrMatchFromText);
+
+        const validCandidates = rawCandidates.filter((c) => !!getAirportByCode(c));
+        let depIata = validCandidates[0] || '';
+        let arrIata = validCandidates[1] || '';
+
+        // If still missing, try city → IATA mapping
+        if (!depIata || !arrIata) {
+          const plain = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+          const arrow = plain.match(/([A-Za-z][A-Za-z .()'\-]{2,})\s*(?:->| to |–|—| - )\s*([A-Za-z][A-Za-z .()'\-]{2,})/i);
+          if (arrow) {
+            const depCity = arrow[1].trim();
+            const arrCity = arrow[2].trim();
+            const depList = getAirportsByCity(depCity);
+            const arrList = getAirportsByCity(arrCity);
+            if (!depIata && depList.length > 0) depIata = depList[0].code;
+            if (!arrIata && arrList.length > 0) arrIata = arrList[0].code;
+          }
+        }
+
+        if (!depIata || !arrIata) return null;
 
         // Attempt to compute duration from first two times
         const depTime = results.time?.[0] || '';
@@ -695,17 +719,17 @@ class BulletproofFlightAPI {
           flightNumber,
           date,
           departure: {
-            airport: results.departure?.[0] || 'Unknown Airport',
+            airport: getAirportByCode(depIata)?.name || 'Unknown Airport',
             iata: depIata,
-            city: '',
-            country: '',
+            city: getAirportByCode(depIata)?.city || '',
+            country: getAirportByCode(depIata)?.country || '',
             scheduledTime: this.combineDateTime(date, depTime),
           },
           arrival: {
-            airport: results.arrival?.[0] || 'Unknown Airport',
+            airport: getAirportByCode(arrIata)?.name || 'Unknown Airport',
             iata: arrIata,
-            city: '',
-            country: '',
+            city: getAirportByCode(arrIata)?.city || '',
+            country: getAirportByCode(arrIata)?.country || '',
             scheduledTime: this.combineDateTime(date, arrTime),
           },
           airline: {
