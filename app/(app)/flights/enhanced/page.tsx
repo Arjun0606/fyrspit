@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 export default function EnhancedFlightPage() {
   const [user] = useAuthState(auth);
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'manual' | 'boarding-pass'>('manual');
+
   
   // Manual entry state
   const [flightNumber, setFlightNumber] = useState('');
@@ -166,157 +166,58 @@ export default function EnhancedFlightPage() {
         </div>
 
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">Enhanced Flight Logger</h1>
-          <p className="text-gray-400 text-sm sm:text-base">Enter flight details or upload your boarding pass</p>
-          <p className="text-orange-400 text-xs mt-2">✨ Get bonus XP for boarding pass uploads!</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">Log Your Flight</h1>
+          <p className="text-gray-400 text-sm sm:text-base">Enter flight number + date to get all details automatically</p>
+          <p className="text-orange-400 text-xs mt-2">📱 Upload boarding pass after logging for bonus XP!</p>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="border-b border-gray-700 mb-6 sm:mb-8">
-          <nav className="flex space-x-4 sm:space-x-8">
-            <button
-              onClick={() => setActiveTab('manual')}
-              className={`flex items-center space-x-2 py-3 sm:py-4 px-2 border-b-2 transition-colors ${
-                activeTab === 'manual'
-                  ? 'border-orange-500 text-orange-400'
-                  : 'border-transparent text-gray-400 hover:text-gray-300'
-              }`}
-            >
-              <Plane className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="text-sm sm:text-base">Manual Entry</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('boarding-pass')}
-              className={`flex items-center space-x-2 py-3 sm:py-4 px-2 border-b-2 transition-colors ${
-                activeTab === 'boarding-pass'
-                  ? 'border-orange-500 text-orange-400'
-                  : 'border-transparent text-gray-400 hover:text-gray-300'
-              }`}
-            >
-              <Camera className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="text-sm sm:text-base">Boarding Pass</span>
-            </button>
-          </nav>
-        </div>
-
-        {/* Manual Entry Tab */}
-        {activeTab === 'manual' && (
-          <div className="space-y-6">
-            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
-              <h2 className="text-xl font-bold text-white mb-4">Flight Details</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">Flight Number</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., QR123, EK456"
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    value={flightNumber}
-                    onChange={(e) => setFlightNumber(e.target.value.toUpperCase())}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">Flight Date</label>
-                  <input
-                    type="date"
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    value={flightDate}
-                    onChange={(e) => setFlightDate(e.target.value)}
-                  />
-                </div>
+        {/* Main Flight Entry */}
+        <div className="space-y-6">
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
+            <h2 className="text-xl font-bold text-white mb-4">Flight Details</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Flight Number</label>
+                <input
+                  type="text"
+                  placeholder="e.g., QR123, EK456"
+                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  value={flightNumber}
+                  onChange={(e) => setFlightNumber(e.target.value.toUpperCase())}
+                />
               </div>
-
-              <button
-                onClick={handleFlightLookup}
-                disabled={isLoading || !flightNumber.trim()}
-                className="w-full flex items-center justify-center space-x-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white py-3 px-6 rounded-lg transition-colors"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Looking up flight...</span>
-                  </>
-                ) : (
-                  <>
-                    <Zap className="h-5 w-5" />
-                    <span>Get Flight Data</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Boarding Pass Tab */}
-        {activeTab === 'boarding-pass' && (
-          <div className="space-y-6">
-            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
-              <h2 className="text-xl font-bold text-white mb-4">Upload Boarding Pass</h2>
               
-              {!boardingPassPreview ? (
-                <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
-                  <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-400 mb-4">Upload your boarding pass for automatic data extraction</p>
-                  <p className="text-orange-400 text-sm mb-4">📱 Take a photo or upload from gallery</p>
-                  
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleBoardingPassUpload}
-                    className="hidden"
-                    id="boarding-pass-upload"
-                  />
-                  <label
-                    htmlFor="boarding-pass-upload"
-                    className="inline-flex items-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-lg cursor-pointer transition-colors"
-                  >
-                    <Upload className="h-5 w-5" />
-                    <span>Choose File</span>
-                  </label>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="relative">
-                    <img
-                      src={boardingPassPreview}
-                      alt="Boarding pass preview"
-                      className="w-full max-h-64 object-contain rounded-lg border border-gray-600"
-                    />
-                    <button
-                      onClick={() => {
-                        setBoardingPassPreview(null);
-                        setBoardingPassFile(null);
-                      }}
-                      className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full"
-                    >
-                      ×
-                    </button>
-                  </div>
-                  
-                  <button
-                    onClick={processBoardingPass}
-                    disabled={isProcessingBoardingPass}
-                    className="w-full flex items-center justify-center space-x-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-600 text-white py-3 px-6 rounded-lg transition-colors"
-                  >
-                    {isProcessingBoardingPass ? (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span>Processing boarding pass...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="h-5 w-5" />
-                        <span>Extract Flight Data</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Flight Date</label>
+                <input
+                  type="date"
+                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  value={flightDate}
+                  onChange={(e) => setFlightDate(e.target.value)}
+                />
+              </div>
             </div>
+
+            <button
+              onClick={handleFlightLookup}
+              disabled={isLoading || !flightNumber.trim()}
+              className="w-full flex items-center justify-center space-x-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white py-3 px-6 rounded-lg transition-colors"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Looking up flight...</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="h-5 w-5" />
+                  <span>Get Flight Data</span>
+                </>
+              )}
+            </button>
           </div>
-        )}
+        </div>
 
         {/* Flight Data Display */}
         {flightData && (
@@ -370,56 +271,6 @@ export default function EnhancedFlightPage() {
                 </div>
               )}
 
-              {/* Boarding Pass Specific Data */}
-              {flightData.seat && (
-                <div className="border-t border-gray-600 pt-4 mt-4">
-                  <h3 className="text-lg font-semibold text-white mb-4">Boarding Pass Details</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-gray-400 text-sm">Seat</p>
-                      <p className="text-white font-medium">{flightData.seat.number}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-sm">Class</p>
-                      <p className="text-white font-medium">{flightData.seat.class}</p>
-                    </div>
-                    {flightData.bookingReference && (
-                      <div>
-                        <p className="text-gray-400 text-sm">Booking Ref</p>
-                        <p className="text-white font-medium">{flightData.bookingReference}</p>
-                      </div>
-                    )}
-                    {flightData.totalBonusXP && (
-                      <div>
-                        <p className="text-gray-400 text-sm">Bonus XP</p>
-                        <p className="text-orange-400 font-bold">+{flightData.totalBonusXP}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Achievements */}
-              {flightData.achievements && flightData.achievements.length > 0 && (
-                <div className="border-t border-gray-600 pt-4 mt-4">
-                  <h3 className="text-lg font-semibold text-white mb-4">Achievements Unlocked</h3>
-                  <div className="space-y-2">
-                    {flightData.achievements.map((achievement: any, index: number) => (
-                      <div key={index} className="bg-orange-900/20 border border-orange-700 rounded-lg p-3">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xl">{achievement.icon}</span>
-                          <div>
-                            <p className="text-orange-400 font-medium">{achievement.name}</p>
-                            <p className="text-gray-400 text-sm">{achievement.description}</p>
-                            <p className="text-orange-300 text-xs">+{achievement.xp} XP</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <div className="mt-6 pt-4 border-t border-gray-600">
                 <button
                   onClick={saveFlightLog}
@@ -427,6 +278,98 @@ export default function EnhancedFlightPage() {
                 >
                   Save Flight Log 🎉
                 </button>
+              </div>
+            </div>
+
+            {/* Bonus: Boarding Pass Upload Section */}
+            <div className="bg-gradient-to-r from-orange-900/20 to-yellow-900/20 border border-orange-700 rounded-lg p-6">
+              <div className="flex items-center space-x-2 mb-4">
+                <Camera className="h-6 w-6 text-orange-400" />
+                <h3 className="text-xl font-bold text-white">Bonus: Upload Boarding Pass</h3>
+                <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">+100 XP</span>
+              </div>
+              <p className="text-gray-400 mb-4">Upload a photo of your boarding pass for verification and bonus points!</p>
+              
+              {!boardingPassPreview ? (
+                <div className="border-2 border-dashed border-orange-600 rounded-lg p-6 text-center">
+                  <Camera className="h-10 w-10 text-orange-400 mx-auto mb-3" />
+                  <p className="text-orange-400 mb-3">📱 Take a photo or upload from gallery</p>
+                  
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBoardingPassUpload}
+                    className="hidden"
+                    id="boarding-pass-upload"
+                  />
+                  <label
+                    htmlFor="boarding-pass-upload"
+                    className="inline-flex items-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg cursor-pointer transition-colors"
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span>Choose File</span>
+                  </label>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="relative">
+                    <img
+                      src={boardingPassPreview}
+                      alt="Boarding pass preview"
+                      className="w-full max-h-48 object-contain rounded-lg border border-orange-600"
+                    />
+                    <button
+                      onClick={() => {
+                        setBoardingPassPreview(null);
+                        setBoardingPassFile(null);
+                      }}
+                      className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full text-sm"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  
+                  <button
+                    onClick={processBoardingPass}
+                    disabled={isProcessingBoardingPass}
+                    className="w-full flex items-center justify-center space-x-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors"
+                  >
+                    {isProcessingBoardingPass ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Processing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-4 w-4" />
+                        <span>Verify & Get Bonus XP</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Boarding Pass Achievements (if uploaded) */}
+        {flightData && flightData.achievements && flightData.achievements.length > 0 && (
+          <div className="mt-6">
+            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">🎉 Achievements Unlocked</h3>
+              <div className="space-y-3">
+                {flightData.achievements.map((achievement: any, index: number) => (
+                  <div key={index} className="bg-orange-900/20 border border-orange-700 rounded-lg p-4">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">{achievement.icon}</span>
+                      <div>
+                        <p className="text-orange-400 font-medium">{achievement.name}</p>
+                        <p className="text-gray-400 text-sm">{achievement.description}</p>
+                        <p className="text-orange-300 text-sm font-bold">+{achievement.xp} XP</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
