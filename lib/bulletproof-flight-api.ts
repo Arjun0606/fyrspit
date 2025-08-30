@@ -7,7 +7,7 @@
  */
 
 import axios from 'axios';
-import { getAirportByCode } from './airports-database';
+import { getAirportByCode, getAirportsByCity } from './airports-database';
 
 // Track SERP usage across invocations (best-effort in serverless)
 declare global {
@@ -242,8 +242,24 @@ class BulletproofFlightAPI {
       const timeMatches = text.match(/\b\d{1,2}:\d{2}\s*(?:AM|PM)?\b/gi) || [];
       const airlineMatch = text.match(/(IndiGo|Qatar Airways|Emirates|Etihad|Air India|Vistara|Akasa|SpiceJet|United|Delta|American|British Airways|Lufthansa|KLM|Air France|Singapore Airlines|Cathay Pacific|Qantas|Ryanair|easyJet)/i);
 
-      const depIata = iataMatches[0] || '';
-      const arrIata = iataMatches[1] || '';
+      let depIata = iataMatches[0] || '';
+      let arrIata = iataMatches[1] || '';
+
+      // Fallback: try to extract cities and map to IATA
+      if (!depIata || !arrIata) {
+        // Normalize separators
+        const normalized = text.replace(/&rarr;|→|\u2192/g, '->').replace(/\s+/g, ' ');
+        const arrowMatch = normalized.match(/([A-Za-z][A-Za-z .()'\-]{2,})\s*(?:->| to )\s*([A-Za-z][A-Za-z .()'\-]{2,})/i);
+        if (arrowMatch) {
+          const depCity = arrowMatch[1].trim().replace(/\([^)]*\)/g, '').trim();
+          const arrCity = arrowMatch[2].trim().replace(/\([^)]*\)/g, '').trim();
+          const depCandidates = getAirportsByCity(depCity);
+          const arrCandidates = getAirportsByCity(arrCity);
+          if (depCandidates && depCandidates.length > 0) depIata = depCandidates[0].code;
+          if (arrCandidates && arrCandidates.length > 0) arrIata = arrCandidates[0].code;
+        }
+      }
+
       if (!depIata || !arrIata) return null;
 
       const depTime = timeMatches[0] || '';
