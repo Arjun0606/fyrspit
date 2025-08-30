@@ -7,6 +7,7 @@
  */
 
 import axios from 'axios';
+import { getAirportByCode } from './airports-database';
 
 export interface FlightData {
   // Core Info
@@ -233,7 +234,8 @@ class BulletproofFlightAPI {
    */
   private async scrapeGoogle(flightNumber: string, date: string): Promise<FlightData | null> {
     try {
-      const searchQuery = `${flightNumber} flight status`;
+      // Include date to get the correct instance
+      const searchQuery = `${flightNumber} ${date} flight status`;
       const url = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
       
       const response = await axios.get(url, {
@@ -413,22 +415,34 @@ class BulletproofFlightAPI {
 
       // Build flight data from extracted info
       if (results.departure || results.arrival || results.airline) {
+        // Derive IATA codes (first two matches)
+        const depIata = results.airport?.[0] || '';
+        const arrIata = results.airport?.[1] || '';
+
+        // Attempt to compute duration from first two times
+        const depTime = results.time?.[0] || '';
+        const arrTime = results.time?.[1] || '';
+        const duration = this.calculateDurationFromStrings(date, depTime, arrTime);
+
+        // Compute distance from airport coordinates if available
+        const distance = this.computeDistanceMiles(depIata, arrIata);
+
         return {
           flightNumber,
           date,
           departure: {
             airport: results.departure?.[0] || 'Unknown Airport',
-            iata: results.airport?.[0] || '',
+            iata: depIata,
             city: '',
             country: '',
-            scheduledTime: results.time?.[0] || '',
+            scheduledTime: this.combineDateTime(date, depTime),
           },
           arrival: {
             airport: results.arrival?.[0] || 'Unknown Airport',
-            iata: results.airport?.[1] || '',
+            iata: arrIata,
             city: '',
             country: '',
-            scheduledTime: results.time?.[1] || '',
+            scheduledTime: this.combineDateTime(date, arrTime),
           },
           airline: {
             name: results.airline?.[0] || 'Unknown Airline',
@@ -440,10 +454,10 @@ class BulletproofFlightAPI {
             type: 'Commercial',
           },
           status: this.normalizeStatus(results.status?.[0] || 'scheduled'),
-          duration: '2h 15m',
-          distance: 900,
-          xpValue: 130,
-          isInternational: false,
+          duration,
+          distance,
+          xpValue: this.calculateXPFromValues(distance, duration, depIata, arrIata),
+          isInternational: this.isInternationalByIata(depIata, arrIata),
           dataSource: 'Google'
         };
       }
@@ -456,19 +470,23 @@ class BulletproofFlightAPI {
   }
 
   private parseGoogleStructuredData(data: any, flightNumber: string, date: string): FlightData {
+    const depIata = data.departureAirport?.iataCode || '';
+    const arrIata = data.arrivalAirport?.iataCode || '';
+    const duration = this.calculateDuration(data.departureTime, data.arrivalTime);
+    const distance = this.computeDistanceMiles(depIata, arrIata);
     return {
       flightNumber,
       date,
       departure: {
         airport: data.departureAirport?.name || 'Unknown Airport',
-        iata: data.departureAirport?.iataCode || '',
+        iata: depIata,
         city: data.departureAirport?.address?.addressLocality || '',
         country: data.departureAirport?.address?.addressCountry || '',
         scheduledTime: data.departureTime || '',
       },
       arrival: {
         airport: data.arrivalAirport?.name || 'Unknown Airport',
-        iata: data.arrivalAirport?.iataCode || '',
+        iata: arrIata,
         city: data.arrivalAirport?.address?.addressLocality || '',
         country: data.arrivalAirport?.address?.addressCountry || '',
         scheduledTime: data.arrivalTime || '',
@@ -483,10 +501,10 @@ class BulletproofFlightAPI {
         type: 'Commercial',
       },
       status: this.normalizeStatus(data.flightStatus || 'scheduled'),
-      duration: this.calculateDuration(data.departureTime, data.arrivalTime),
-      distance: 1000, // Placeholder
-      xpValue: 140,
-      isInternational: data.departureAirport?.address?.addressCountry !== data.arrivalAirport?.address?.addressCountry,
+      duration,
+      distance,
+      xpValue: this.calculateXPFromValues(distance, duration, depIata, arrIata),
+      isInternational: this.isInternationalByIata(depIata, arrIata),
       dataSource: 'Google Structured'
     };
   }
@@ -522,24 +540,57 @@ class BulletproofFlightAPI {
   }
 
   private estimateDistance(origin?: any, destination?: any): number {
-    // Placeholder distance calculation
-    // In production, use actual airport coordinates
-    return Math.floor(Math.random() * 2500) + 300;
+    return 0;
   }
 
-  private calculateXP(data: any): number {
-    let xp = 100; // Base XP
-    
-    // Distance bonus
-    const distance = this.estimateDistance(data.airport?.origin, data.airport?.destination);
-    xp += Math.floor(distance / 100) * 5;
-    
-    // Aircraft bonus
-    if (data.aircraft?.model?.text?.includes('A380')) xp += 50;
-    if (data.aircraft?.model?.text?.includes('787')) xp += 30;
-    if (data.aircraft?.model?.text?.includes('A350')) xp += 25;
-    
-    return Math.min(xp, 500); // Cap at 500 XP
+  private calculateXP(data: any): number { return 100; }
+
+  private calculateDurationFromStrings(date: string, depTime?: string, arrTime?: string): string {
+    if (!depTime || !arrTime) return '0h 0m';
+    const toDate = (t: string) => new Date(`${date} ${t}`);
+    try {
+      const dep = toDate(depTime);
+      let arr = toDate(arrTime);
+      if (arr < dep) { arr = new Date(arr.getTime() + 24 * 60 * 60 * 1000); }
+      const diff = arr.getTime() - dep.getTime();
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      return `${hours}h ${minutes}m`;
+    } catch { return '0h 0m'; }
+  }
+
+  private computeDistanceMiles(depIata?: string, arrIata?: string): number {
+    if (!depIata || !arrIata) return 0;
+    const dep = getAirportByCode(depIata);
+    const arr = getAirportByCode(arrIata);
+    if (!dep || !arr) return 0;
+    const R = 3958.7613; // miles
+    const toRad = (d: number) => (d * Math.PI) / 180;
+    const dLat = toRad(arr.coordinates.lat - dep.coordinates.lat);
+    const dLon = toRad(arr.coordinates.lng - dep.coordinates.lng);
+    const lat1 = toRad(dep.coordinates.lat);
+    const lat2 = toRad(arr.coordinates.lat);
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return Math.round(R * c);
+  }
+
+  private isInternationalByIata(depIata?: string, arrIata?: string): boolean {
+    if (!depIata || !arrIata) return false;
+    const dep = getAirportByCode(depIata);
+    const arr = getAirportByCode(arrIata);
+    if (!dep || !arr) return false;
+    return dep.country !== arr.country;
+  }
+
+  private calculateXPFromValues(distance: number, durationStr: string, depIata?: string, arrIata?: string): number {
+    let xp = 100;
+    xp += Math.floor(distance / 50); // 1 XP per 50 miles
+    const isIntl = this.isInternationalByIata(depIata, arrIata);
+    if (isIntl) xp += 150;
+    const minutes = (() => { const m = /([0-9]+)h\s+([0-9]+)m/.exec(durationStr); return m ? (parseInt(m[1]) * 60 + parseInt(m[2])) : 0; })();
+    if (minutes > 360) xp += 200; // long haul
+    return Math.max(50, Math.min(800, xp));
   }
 
   private isInternationalFlight(origin?: any, destination?: any): boolean {
