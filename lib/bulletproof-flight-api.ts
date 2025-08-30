@@ -236,14 +236,13 @@ class BulletproofFlightAPI {
     try {
       // Include date to get the correct instance
       const searchQuery = `${flightNumber} ${date} flight status`;
-      const url = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+      const url = `https://www.google.com/search?hl=en&gl=in&num=1&q=${encodeURIComponent(searchQuery)}`;
       
       const response = await axios.get(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
           'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate, br',
           'DNT': '1',
           'Connection': 'keep-alive',
           'Upgrade-Insecure-Requests': '1',
@@ -382,11 +381,11 @@ class BulletproofFlightAPI {
       // Enhanced Google parsing with multiple patterns
       const patterns = {
         // Look for flight card data
-        departure: /(?:from|depart(?:ure)?)[^>]*>([^<]+)</gi,
-        arrival: /(?:to|arriv(?:al)?)[^>]*>([^<]+)</gi,
-        airline: /(?:airline|carrier)[^>]*>([^<]+)</gi,
-        status: /(?:status|delayed|on time|cancelled)[^>]*>([^<]+)</gi,
-        time: /\d{1,2}:\d{2}\s*(?:AM|PM)/gi,
+        departure: /\bfrom\b[^<]*<[^>]*>([^<]{3,})</gi,
+        arrival: /\bto\b[^<]*<[^>]*>([^<]{3,})</gi,
+        airline: /(IndiGo|Qatar Airways|Emirates|Etihad|Air India|Vistara|Akasa|SpiceJet|United|Delta|American|British Airways)/gi,
+        status: /(arrived|departed|on time|delayed|cancelled)/gi,
+        time: /\b\d{1,2}:\d{2}\s*(?:AM|PM)\b/gi,
         airport: /\b[A-Z]{3}\b/g, // IATA codes
       };
 
@@ -413,11 +412,11 @@ class BulletproofFlightAPI {
         }
       }
 
-      // Build flight data from extracted info
-      if (results.departure || results.arrival || results.airline) {
+      // Build flight data from extracted info (fallback tolerant)
+      if ((results.airport && results.airport.length >= 2) || results.departure || results.arrival) {
         // Derive IATA codes (first two matches)
-        const depIata = results.airport?.[0] || '';
-        const arrIata = results.airport?.[1] || '';
+        const depIata = results.airport?.[0] || (results.departure?.[0]?.match(/\b[A-Z]{3}\b/)?.[0] ?? '');
+        const arrIata = results.airport?.[1] || (results.arrival?.[0]?.match(/\b[A-Z]{3}\b/)?.[0] ?? '');
 
         // Attempt to compute duration from first two times
         const depTime = results.time?.[0] || '';
