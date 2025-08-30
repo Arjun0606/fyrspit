@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { adminDb } from './firebase-admin';
-import { getAirportByCode } from './airports-database';
+import { getAirportByCode, getAirportsByCity } from './airports-database';
 
 export interface EnrichInput {
   flightNo: string;
@@ -150,12 +150,18 @@ function parseAeroDataBox(data: any, flightNo: string, date: string): EnrichedFl
   let depLon = depAirport?.location?.lon || depAirport?.longitude as number | undefined;
   let arrLat = arrAirport?.location?.lat || arrAirport?.latitude as number | undefined;
   let arrLon = arrAirport?.location?.lon || arrAirport?.longitude as number | undefined;
+  let depIata = depAirport?.iata || depAirport?.iataCode || dep?.iata || '';
+  let arrIata = arrAirport?.iata || arrAirport?.iataCode || arr?.iata || '';
 
   // IATA-based coordinate fallback using our airports database
   if (typeof depLat !== 'number' || typeof depLon !== 'number') {
-    const depCode = depAirport?.iata || depAirport?.iataCode || dep?.iata || '';
-    const depLookup = depCode ? getAirportByCode(depCode) : undefined;
+    let depLookup = depIata ? getAirportByCode(depIata) : undefined;
+    if (!depLookup) {
+      const city = (depAirport as any)?.city || (depAirport as any)?.nameCity || (depAirport as any)?.municipalityName || (depAirport as any)?.name;
+      if (city) depLookup = getAirportsByCity(city)[0];
+    }
     if (depLookup) {
+      depIata = depLookup.code;
       depLat = depLookup.coordinates.lat;
       depLon = depLookup.coordinates.lng;
       if (!depAirport?.city) (depAirport as any).city = depLookup.city;
@@ -163,9 +169,13 @@ function parseAeroDataBox(data: any, flightNo: string, date: string): EnrichedFl
     }
   }
   if (typeof arrLat !== 'number' || typeof arrLon !== 'number') {
-    const arrCode = arrAirport?.iata || arrAirport?.iataCode || arr?.iata || '';
-    const arrLookup = arrCode ? getAirportByCode(arrCode) : undefined;
+    let arrLookup = arrIata ? getAirportByCode(arrIata) : undefined;
+    if (!arrLookup) {
+      const city = (arrAirport as any)?.city || (arrAirport as any)?.nameCity || (arrAirport as any)?.municipalityName || (arrAirport as any)?.name;
+      if (city) arrLookup = getAirportsByCity(city)[0];
+    }
     if (arrLookup) {
+      arrIata = arrLookup.code;
       arrLat = arrLookup.coordinates.lat;
       arrLon = arrLookup.coordinates.lng;
       if (!arrAirport?.city) (arrAirport as any).city = arrLookup.city;
@@ -217,7 +227,7 @@ function parseAeroDataBox(data: any, flightNo: string, date: string): EnrichedFl
     airline: { code: airline?.iata || airline?.code || '', name: airline?.name || '', icao: airline?.icao || '' },
     aircraft: { manufacturer: aircraftManufacturer, model: aircraftModel, needsUserInput },
     from: {
-      iata: depAirport?.iata || depAirport?.iataCode || dep?.iata || '',
+      iata: depIata,
       icao: depAirport?.icao || depAirport?.icaoCode || '',
       city: depAirport?.city || depAirport?.nameCity || depAirport?.municipalityName || depAirport?.name,
       country: depAirport?.countryName || depAirport?.country,
@@ -225,7 +235,7 @@ function parseAeroDataBox(data: any, flightNo: string, date: string): EnrichedFl
       lon: depLon,
     },
     to: {
-      iata: arrAirport?.iata || arrAirport?.iataCode || arr?.iata || '',
+      iata: arrIata,
       icao: arrAirport?.icao || arrAirport?.icaoCode || '',
       city: arrAirport?.city || arrAirport?.nameCity || arrAirport?.municipalityName || arrAirport?.name,
       country: arrAirport?.countryName || arrAirport?.country,
