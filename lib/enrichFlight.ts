@@ -87,7 +87,7 @@ async function saveToCache(flightNo: string, date: string, payload: EnrichedFlig
 
 async function callAeroDataBox(flightNo: string, date: string) {
   const host = 'aerodatabox.p.rapidapi.com';
-  const url = `https://${host}/flights/number/${encodeURIComponent(flightNo)}/${encodeURIComponent(date)}`;
+  const url = `https://${host}/flights/number/${encodeURIComponent(flightNo)}/${encodeURIComponent(date)}?withLocation=true&withAircraftImage=false`;
   const key = process.env.AERODATABOX_KEY;
   if (!key) throw new Error('AERODATABOX_KEY not configured');
   const resp = await axios.get(url, {
@@ -104,7 +104,7 @@ async function callAeroDataBox(flightNo: string, date: string) {
 // Fallback within AeroDataBox only: fetch all instances by number, then pick the provided date
 async function callAeroDataBoxByNumber(flightNo: string) {
   const host = 'aerodatabox.p.rapidapi.com';
-  const url = `https://${host}/flights/number/${encodeURIComponent(flightNo)}?withLocation=false&withOperationalDays=true`;
+  const url = `https://${host}/flights/number/${encodeURIComponent(flightNo)}?withLocation=true&withOperationalDays=true&withAircraftImage=false`;
   const key = process.env.AERODATABOX_KEY;
   if (!key) throw new Error('AERODATABOX_KEY not configured');
   const resp = await axios.get(url, {
@@ -167,17 +167,17 @@ function parseAeroDataBox(data: any, flightNo: string, date: string): EnrichedFl
     airline: { code: airline?.iata || airline?.code || '', name: airline?.name || '', icao: airline?.icao || '' },
     aircraft: { manufacturer: aircraftManufacturer, model: aircraftModel, needsUserInput },
     from: {
-      iata: depAirport?.iata || depAirport?.iataCode || '',
+      iata: depAirport?.iata || depAirport?.iataCode || dep?.iata || '',
       icao: depAirport?.icao || depAirport?.icaoCode || '',
-      city: depAirport?.city || depAirport?.nameCity || depAirport?.municipalityName,
+      city: depAirport?.city || depAirport?.nameCity || depAirport?.municipalityName || depAirport?.name,
       country: depAirport?.countryName || depAirport?.country,
       lat: depLat,
       lon: depLon,
     },
     to: {
-      iata: arrAirport?.iata || arrAirport?.iataCode || '',
+      iata: arrAirport?.iata || arrAirport?.iataCode || arr?.iata || '',
       icao: arrAirport?.icao || arrAirport?.icaoCode || '',
-      city: arrAirport?.city || arrAirport?.nameCity || arrAirport?.municipalityName,
+      city: arrAirport?.city || arrAirport?.nameCity || arrAirport?.municipalityName || arrAirport?.name,
       country: arrAirport?.countryName || arrAirport?.country,
       lat: arrLat,
       lon: arrLon,
