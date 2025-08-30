@@ -65,6 +65,9 @@ export default function NewFlightPage() {
       }
 
       const result = await response.json();
+      if (result?.error) {
+        throw new Error(result?.message || 'Flight not found or data unavailable');
+      }
       setFlightData(result);
 
       // Show success with flight details
@@ -207,7 +210,7 @@ export default function NewFlightPage() {
         </div>
 
         {/* Flight Data Preview */}
-        {flightData && (
+        {flightData && !flightData.error && (
           <div className="bg-gray-800/50 backdrop-blur-sm border-2 border-green-500/20 bg-green-500/5 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-lg">
             <div className="flex items-center space-x-2 mb-4">
               <div className="h-6 w-6 bg-green-500 rounded-full flex items-center justify-center">
