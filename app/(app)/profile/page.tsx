@@ -71,29 +71,13 @@ export default function ProfilePage() {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data() as UserProfile;
+        console.log('Profile loaded:', userData); // Debug log
         setProfile(userData);
       } else {
-        // Create a fallback profile from Firebase auth data
-        const fallbackProfile: UserProfile = {
-          username: user.email?.split('@')[0] || 'user',
-          profilePictureUrl: user.photoURL || undefined,
-          homeAirport: 'Unknown',
-          travelStyle: 'Explorer',
-          onboarded: false,
-        };
-        setProfile(fallbackProfile);
+        console.log('No user document found in Firestore');
       }
     } catch (error) {
       console.error('Error loading profile:', error);
-      // Even if there's an error, create a basic fallback
-      const fallbackProfile: UserProfile = {
-        username: user.email?.split('@')[0] || 'user',
-        profilePictureUrl: user.photoURL || undefined,
-        homeAirport: 'Unknown',
-        travelStyle: 'Explorer',
-        onboarded: false,
-      };
-      setProfile(fallbackProfile);
     } finally {
       setLoadingProfile(false);
     }

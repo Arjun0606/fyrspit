@@ -37,20 +37,13 @@ export function Navigation({ currentPath }: NavigationProps) {
     if (!u) return;
     getDoc(doc(db, 'users', u.uid)).then(s => {
       if (s.exists()) {
+        console.log('Navigation profile loaded:', s.data()); // Debug log
         setProfile(s.data() as any);
       } else {
-        // Fallback to Firebase auth data
-        setProfile({
-          username: u.email?.split('@')[0] || 'user',
-          profilePictureUrl: u.photoURL || undefined
-        });
+        console.log('No user document found for navigation');
       }
-    }).catch(() => {
-      // Fallback to Firebase auth data on error
-      setProfile({
-        username: u.email?.split('@')[0] || 'user',
-        profilePictureUrl: u.photoURL || undefined
-      });
+    }).catch((error) => {
+      console.error('Error loading profile for navigation:', error);
     });
   }, []);
 

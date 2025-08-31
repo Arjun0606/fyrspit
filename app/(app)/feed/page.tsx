@@ -42,20 +42,13 @@ export default function FeedPage() {
       // Load profile for username/avatar fallback
       getDoc(doc(db, 'users', user.uid)).then(s => {
         if (s.exists()) {
+          console.log('Feed profile loaded:', s.data()); // Debug log
           setProfile(s.data() as any);
         } else {
-          // Fallback to Firebase auth data
-          setProfile({
-            username: user.email?.split('@')[0] || 'user',
-            profilePictureUrl: user.photoURL || undefined
-          });
+          console.log('No user document found for feed');
         }
-      }).catch(() => {
-        // Fallback to Firebase auth data on error
-        setProfile({
-          username: user.email?.split('@')[0] || 'user',
-          profilePictureUrl: user.photoURL || undefined
-        });
+      }).catch((error) => {
+        console.error('Error loading profile for feed:', error);
       });
     }
   }, [user]);
