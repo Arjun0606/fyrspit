@@ -93,9 +93,9 @@ export default function ExplorePage() {
         {
           id: user.uid,
           username: (profile.username || user.email?.split('@')[0] || 'you').toString(),
-          profilePicture: profile.profilePictureUrl || user.photoURL || undefined,
+          profilePicture: profile.profilePictureUrl || undefined,
           totalFlights: flights.length,
-          level: 1,
+          level: profile?.level || 1,
           badges: [],
         },
       ]);
