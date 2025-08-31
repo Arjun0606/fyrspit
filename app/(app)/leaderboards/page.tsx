@@ -137,7 +137,7 @@ export default function LeaderboardsPage() {
                 <div className={`card ${index === 1 ? 'bg-gradient-to-b from-yellow-900/30 to-gray-800/50 border-yellow-500/30' : ''}`}>
                   <div className="mb-4">{getRankIcon(actualEntry.rank || index + 1)}</div>
                   {actualEntry.profilePicture ? (
-                    <Image src={actualEntry.profilePicture} alt={actualEntry.username} width={64} height={64} className="rounded-full object-cover mx-auto mb-3" />
+                    <img src={actualEntry.profilePicture} alt={actualEntry.username} className="w-16 h-16 rounded-full object-cover mx-auto mb-3" />
                   ) : (
                     <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
                       <span className="text-white text-xl font-semibold">{actualEntry.username.charAt(0).toUpperCase()}</span>
@@ -177,13 +177,7 @@ export default function LeaderboardsPage() {
                   </div>
                   
                   {entry.profilePicture ? (
-                    <Image
-                      src={entry.profilePicture}
-                      alt={entry.username}
-                      width={40}
-                      height={40}
-                      className="rounded-full object-cover"
-                    />
+                    <img src={entry.profilePicture} alt={entry.username} className="w-10 h-10 rounded-full object-cover" />
                   ) : (
                     <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
                       <span className="text-white font-semibold">
