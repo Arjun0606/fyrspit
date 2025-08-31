@@ -24,7 +24,8 @@ export async function GET(req: NextRequest) {
     const userId = decodedToken.uid;
     
     // Get user document
-    const userDoc = await getDoc(doc(adminDb, 'users', userId));
+    const userDocRef = doc(adminDb, 'users', userId);
+    const userDoc = await getDoc(userDocRef);
     const userData = userDoc.exists() ? userDoc.data() : null;
 
     return NextResponse.json({
