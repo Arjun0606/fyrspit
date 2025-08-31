@@ -76,6 +76,18 @@ export default function SettingsPage() {
             statsVisibility: 'public',
           }
         });
+
+        // If no profilePictureUrl set in Firestore, try to auto-sync the uploaded one from Storage
+        if (!userData.profilePictureUrl) {
+          try {
+            const r = ref(storage, `profile-pictures/${user.uid}`);
+            const url = await getDownloadURL(r);
+            setSettings(prev => (prev ? { ...prev, profilePictureUrl: url } : prev));
+            await updateDoc(doc(db, 'users', user.uid), { profilePictureUrl: url });
+          } catch (_) {
+            // Ignore if no file exists in storage
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -176,9 +188,23 @@ export default function SettingsPage() {
       setSaving(true);
       
       // Restore original profile data with proper XP and stats
+      // Prefer an uploaded Storage photo > Firestore existing > Google photo
+      let resolvedPhoto: string | undefined = settings?.profilePictureUrl;
+      if (!resolvedPhoto) {
+        try {
+          const r = ref(storage, `profile-pictures/${user.uid}`);
+          resolvedPhoto = await getDownloadURL(r);
+        } catch (_) {
+          // no-op
+        }
+      }
+      if (!resolvedPhoto) {
+        resolvedPhoto = user.photoURL || undefined;
+      }
+
       const restoredData = {
         username: 'arjun0606',
-        profilePictureUrl: user.photoURL || settings?.profilePictureUrl, // Keep current pic for now
+        profilePictureUrl: resolvedPhoto,
         age: 24,
         gender: 'Male',
         homeAirport: 'Bangalore',
