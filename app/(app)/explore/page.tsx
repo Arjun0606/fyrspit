@@ -39,6 +39,7 @@ export default function ExplorePage() {
   const [routes, setRoutes] = useState<TrendingRoute[]>([]);
   const [airports, setAirports] = useState<FeaturedAirport[]>([]);
   const [aircrafts, setAircrafts] = useState<{ type: string; flights: number; airlines: string[] }[]>([]);
+  const [users, setUsers] = useState<PopularUser[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -84,13 +85,25 @@ export default function ExplorePage() {
         if (f.airline?.name) entry.airlines.add(f.airline.name);
       }
       setAircrafts(Array.from(aircraftMap.entries()).map(([type, v]) => ({ type, flights: v.flights, airlines: Array.from(v.airlines) })));
+
+      // Top aviators (just the current user for now)
+      setUsers([
+        {
+          id: user.uid,
+          username: user.displayName || user.email?.split('@')[0] || 'you',
+          profilePicture: user.photoURL || undefined,
+          totalFlights: flights.length,
+          level: 1,
+          badges: [],
+        },
+      ]);
     };
     load();
   }, []);
 
   // No dummy data placeholders
   const trendingRoutes: TrendingRoute[] = routes;
-  const popularUsers: PopularUser[] = [];
+  const popularUsers: PopularUser[] = users.filter(u => u.totalFlights > 0);
   const featuredAirports: FeaturedAirport[] = airports;
   const aircraftTypes: { type: string; flights: number; airlines: string[] }[] = aircrafts;
 

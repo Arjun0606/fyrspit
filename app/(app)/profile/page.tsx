@@ -154,7 +154,7 @@ export default function ProfilePage() {
     };
   })();
 
-  const derivedStats = useMemo(() => {
+  const derivedStats = (() => {
     const totalFlights = flights.length;
     const totalMiles = flights.reduce((sum, f: any) => sum + (Number(f?.route?.distance) || 0), 0);
     const totalHours = flights.reduce((sum, f: any) => sum + ((Number((f as any)?.route?.duration) || 0) / 60), 0);
@@ -168,7 +168,7 @@ export default function ProfilePage() {
       level: profile?.stats?.level || 1,
       xp: profile?.stats?.xp || 0,
     };
-  }, [flights, collections, profile?.stats]);
+  })();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
