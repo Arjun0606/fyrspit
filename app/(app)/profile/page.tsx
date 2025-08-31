@@ -35,8 +35,8 @@ interface Flight {
   airline: { name: string; code: string };
   aircraft: { model: string; manufacturer: string };
   route: {
-    from: { iata: string; city: string };
-    to: { iata: string; city: string };
+    from: { iata: string; city: string; country: string };
+    to: { iata: string; city: string; country: string };
     distance: number;
   };
   date: string;
@@ -134,8 +134,8 @@ export default function ProfilePage() {
     for (const f of flights) {
       if ((f as any).route?.from?.iata) airports.add((f as any).route.from.iata);
       if ((f as any).route?.to?.iata) airports.add((f as any).route.to.iata);
-      if ((f as any).route?.from?.city) countries.add((f as any).route.from.city);
-      if ((f as any).route?.to?.city) countries.add((f as any).route.to.city);
+      if ((f as any).route?.from?.country) countries.add((f as any).route.from.country);
+      if ((f as any).route?.to?.country) countries.add((f as any).route.to.country);
       if (f.airline?.name) airlines.add(f.airline.name);
       if (f.aircraft?.model) aircraftModels.add(f.aircraft.model);
       if (f.aircraft?.manufacturer) manufacturers.add(f.aircraft.manufacturer);

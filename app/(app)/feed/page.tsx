@@ -203,7 +203,7 @@ export default function FeedPage() {
                     </div>
                   )}
                   <div>
-                    <div className="font-semibold text-white">@{flight.userUsername}</div>
+                    <div className="font-semibold text-white">@{flight.userUsername || 'you'}</div>
                     <div className="text-sm text-gray-400 flex items-center space-x-1">
                       <Clock className="h-3 w-3" />
                       <span>{new Date(flight.createdAt).toLocaleDateString()}</span>

@@ -71,14 +71,14 @@ export async function POST(req: NextRequest) {
     // Build document (drop undefineds)
     const docPayload: any = {
       userId: decoded.uid,
-      userUsername: decoded.name || decoded.email?.split('@')[0] || 'user',
-      userDisplayName: decoded.name || '',
+      userUsername: (decoded as any).user_name || decoded.name || decoded.email?.split('@')[0] || 'user',
+      userDisplayName: decoded.name || decoded.email?.split('@')[0] || '',
       flightNumber,
       airline: airline || {},
       aircraft: aircraft || {},
       route: {
-        from: { iata: from?.iata, city: from?.city || '', name: from?.airport || '' },
-        to: { iata: to?.iata, city: to?.city || '', name: to?.airport || '' },
+        from: { iata: from?.iata, city: from?.city || '', country: from?.country || '', name: from?.name || from?.airport || '' },
+        to: { iata: to?.iata, city: to?.city || '', country: to?.country || '', name: to?.name || to?.airport || '' },
         distance,
         duration: durationMin,
       },
