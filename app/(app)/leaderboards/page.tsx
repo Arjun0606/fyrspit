@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Trophy, Medal, Crown, Plane, MapPin, Clock, Star } from 'lucide-react';
 import Image from 'next/image';
 import { auth, db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 
 interface LeaderboardEntry {
   rank: number;
@@ -27,8 +27,10 @@ export default function LeaderboardsPage() {
       if (!user) return;
       const snap = await getDocs(query(collection(db, 'flights'), where('userId', '==', user.uid)));
       const flights = snap.docs.map(d => d.data() as any);
-      const username = user.displayName || user.email?.split('@')[0] || 'you';
-      const profilePicture = undefined;
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const profile = userDoc.exists() ? (userDoc.data() as any) : {};
+      const username = (profile.username || user.email?.split('@')[0] || 'you').toString();
+      const profilePicture = profile.profilePictureUrl || undefined;
       const flightsCount = flights.length;
       const miles = flights.reduce((s, f: any) => s + (Number(f?.route?.distance) || 0), 0);
       const hours = Math.round(flights.reduce((s, f: any) => s + ((Number((f as any)?.route?.duration) || 0) / 60), 0));

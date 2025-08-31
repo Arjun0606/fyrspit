@@ -180,12 +180,10 @@ export default function ProfilePage() {
               {/* Profile Picture */}
               <div className="relative shrink-0">
                 {profile.profilePictureUrl ? (
-                  <Image
+                  <img
                     src={profile.profilePictureUrl}
                     alt={profile.username}
-                    width={80}
-                    height={80}
-                    className="rounded-full object-cover border-4 border-orange-500 sm:w-30 sm:h-30"
+                    className="w-20 h-20 sm:w-30 sm:h-30 rounded-full object-cover border-4 border-orange-500"
                   />
                 ) : (
                   <div className="w-20 h-20 sm:w-30 sm:h-30 bg-gray-700 rounded-full flex items-center justify-center border-4 border-gray-600">

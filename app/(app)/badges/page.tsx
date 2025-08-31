@@ -44,6 +44,7 @@ interface Badge {
 export default function BadgesPage() {
   const [user] = useAuthState(auth);
   const [userData, setUserData] = useState<User | null>(null);
+  const [flightsCount, setFlightsCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
@@ -61,6 +62,8 @@ export default function BadgesPage() {
             joinedAt: data.joinedAt?.toDate() || new Date(),
           } as User);
         }
+        const snap = await getDocs(query(collection(db, 'flights'), where('userId', '==', user.uid)));
+        setFlightsCount(snap.size);
       } catch (error) {
         console.error('Error fetching user data:', error);
       } finally {
@@ -72,7 +75,7 @@ export default function BadgesPage() {
   }, [user]);
 
   const getBadges = (): Badge[] => {
-    const stats = userData?.statsCache?.lifetime || {};
+    const stats = { ...(userData?.statsCache?.lifetime || {}), flights: flightsCount };
     const userBadges = userData?.badges || [];
 
     return [
