@@ -3,7 +3,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, getDocs, updateDoc } from 'firebase/firestore';
+import { ref, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/lib/firebase';
 import { User, MapPin, Calendar, Plane, Trophy, Users, Settings, Edit, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -71,8 +73,18 @@ export default function ProfilePage() {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data() as UserProfile;
-
         setProfile(userData);
+        // If missing avatar, try to pull from Storage and persist
+        if (!userData.profilePictureUrl) {
+          try {
+            const r = ref(storage, `profile-pictures/${user.uid}`);
+            const url = await getDownloadURL(r);
+            setProfile(prev => (prev ? { ...prev, profilePictureUrl: url } : prev));
+            await updateDoc(doc(db, 'users', user.uid), { profilePictureUrl: url });
+          } catch (_) {
+            // ignore
+          }
+        }
       } else {
         console.log('No user document found in Firestore');
       }
@@ -273,8 +285,8 @@ export default function ProfilePage() {
       airportsVisited: collections.airports.length,
       countriesVisited: collections.countries.length,
       aircraftTypes: collections.aircraftModels.length,
-      level: profile?.stats?.level || 1,
-      xp: profile?.stats?.xp || 0,
+      level: (profile as any)?.level || (profile as any)?.stats?.level || 1,
+      xp: (profile as any)?.xp || (profile as any)?.stats?.xp || 0,
     };
   })();
 
