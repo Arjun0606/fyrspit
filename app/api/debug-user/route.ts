@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
-import { doc, getDoc } from 'firebase/firestore';
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,13 +23,12 @@ export async function GET(req: NextRequest) {
     const userId = decodedToken.uid;
     
     // Get user document
-    const userDocRef = doc(adminDb, 'users', userId);
-    const userDoc = await getDoc(userDocRef);
-    const userData = userDoc.exists() ? userDoc.data() : null;
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    const userData = userDoc.exists ? userDoc.data() : null;
 
     return NextResponse.json({
       userId,
-      userExists: userDoc.exists(),
+      userExists: userDoc.exists,
       userData,
       decodedToken: {
         email: decodedToken.email,
