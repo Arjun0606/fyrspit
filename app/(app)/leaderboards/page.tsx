@@ -37,7 +37,7 @@ export default function LeaderboardsPage() {
       const countries = new Set<string>();
       flights.forEach((f: any) => { if (f?.route?.from?.country) countries.add(f.route.from.country); if (f?.route?.to?.country) countries.add(f.route.to.country); });
 
-      const base: LeaderboardEntry = { rank: 1, userId: user.uid, username, profilePicture, value: 0, badges: [], level: 1 };
+      const base: LeaderboardEntry = { rank: 1, userId: user.uid, username, profilePicture, value: 0, badges: [], level: profile?.level || 1 };
       setEntries({
         flights: [{ ...base, value: flightsCount }],
         miles: [{ ...base, value: miles }],
