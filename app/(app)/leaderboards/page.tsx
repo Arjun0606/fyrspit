@@ -49,7 +49,7 @@ export default function LeaderboardsPage() {
   // No dummy data: show empty state until real leaderboards are implemented
   const leaderboards = entries;
 
-  const currentLeaderboard = leaderboards[activeTab];
+  const currentLeaderboard = leaderboards[activeTab] || [];
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -128,55 +128,31 @@ export default function LeaderboardsPage() {
         </div>
 
         {/* Top 3 Podium */}
-        <div className="grid grid-cols-3 gap-4 mb-8 max-w-4xl mx-auto">
-          {currentLeaderboard.slice(0, 3).map((entry, index) => {
-            const positions = [1, 0, 2]; // Second, First, Third
-            const actualIndex = positions[index];
-            const actualEntry = currentLeaderboard[actualIndex];
-            
-            return (
-              <div 
-                key={actualEntry.userId} 
-                className={`text-center ${index === 1 ? 'order-1' : index === 0 ? 'order-2' : 'order-3'}`}
-              >
+        {currentLeaderboard.length > 0 && (
+          <div className="grid grid-cols-3 gap-4 mb-8 max-w-4xl mx-auto">
+            {currentLeaderboard.slice(0, 3).map((actualEntry, index) => (
+              <div key={actualEntry.userId} className={`text-center ${index === 1 ? 'order-1' : index === 0 ? 'order-2' : 'order-3'}`}>
                 <div className={`card ${index === 1 ? 'bg-gradient-to-b from-yellow-900/30 to-gray-800/50 border-yellow-500/30' : ''}`}>
-                  <div className="mb-4">
-                    {getRankIcon(actualEntry.rank)}
-                  </div>
-                  
+                  <div className="mb-4">{getRankIcon(actualEntry.rank || index + 1)}</div>
                   {actualEntry.profilePicture ? (
-                    <Image
-                      src={actualEntry.profilePicture}
-                      alt={actualEntry.username}
-                      width={64}
-                      height={64}
-                      className="rounded-full object-cover mx-auto mb-3"
-                    />
+                    <Image src={actualEntry.profilePicture} alt={actualEntry.username} width={64} height={64} className="rounded-full object-cover mx-auto mb-3" />
                   ) : (
                     <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <span className="text-white text-xl font-semibold">
-                        {actualEntry.username.charAt(0).toUpperCase()}
-                      </span>
+                      <span className="text-white text-xl font-semibold">{actualEntry.username.charAt(0).toUpperCase()}</span>
                     </div>
                   )}
-                  
                   <h3 className="text-white font-semibold mb-1">@{actualEntry.username}</h3>
-                  <div className="text-2xl font-bold text-orange-400 mb-1">
-                    {formatValue(actualEntry.value, activeTab)}
-                  </div>
+                  <div className="text-2xl font-bold text-orange-400 mb-1">{formatValue(actualEntry.value, activeTab)}</div>
                   <div className="text-sm text-gray-400">{getValueLabel(activeTab)}</div>
-                  
                   <div className="mt-3 flex items-center justify-center space-x-2">
-                    <span className="bg-orange-500/20 text-orange-300 px-2 py-1 rounded text-xs">
-                      Level {actualEntry.level}
-                    </span>
+                    <span className="bg-orange-500/20 text-orange-300 px-2 py-1 rounded text-xs">Level {actualEntry.level}</span>
                     {getChangeIcon(actualEntry.change)}
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Full Leaderboard */}
         <div className="card">

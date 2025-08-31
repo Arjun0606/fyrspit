@@ -86,8 +86,7 @@ export default function ProfilePage() {
     try {
       const flightsQuery = query(
         collection(db, 'flights'),
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc')
+        where('userId', '==', user.uid)
       );
       
       const flightsSnapshot = await getDocs(flightsQuery);
@@ -95,7 +94,12 @@ export default function ProfilePage() {
         id: doc.id,
         ...doc.data()
       })) as Flight[];
-      
+      // Sort client-side to avoid needing a composite index
+      userFlights.sort((a: any, b: any) => {
+        const ad = (a?.createdAt?.toDate?.() || new Date(a?.createdAt || a?.date || 0)).getTime();
+        const bd = (b?.createdAt?.toDate?.() || new Date(b?.createdAt || b?.date || 0)).getTime();
+        return bd - ad;
+      });
       setFlights(userFlights);
     } catch (error) {
       console.error('Error loading flights:', error);
