@@ -265,6 +265,8 @@ export default function SettingsPage() {
                         value={settings.age || ''}
                         onChange={(e) => setSettings({ ...settings, age: parseInt(e.target.value) || undefined })}
                         className="input w-full"
+                        disabled
+                        title="Age is set during onboarding"
                       />
                     </div>
 
@@ -276,6 +278,8 @@ export default function SettingsPage() {
                         value={settings.gender || ''}
                         onChange={(e) => setSettings({ ...settings, gender: e.target.value })}
                         className="input w-full"
+                        disabled
+                        title="Gender is set during onboarding"
                       >
                         <option value="">Select gender</option>
                         <option value="male">Male</option>
@@ -295,6 +299,8 @@ export default function SettingsPage() {
                       value={settings.homeAirport}
                       onChange={(e) => setSettings({ ...settings, homeAirport: e.target.value })}
                       className="input w-full"
+                      disabled
+                      title="Home airport is set during onboarding"
                     />
                   </div>
 
