@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Trophy, Medal, Crown, Plane, MapPin, Clock, Star } from 'lucide-react';
 import Image from 'next/image';
+import { auth, db } from '@/lib/firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 interface LeaderboardEntry {
   rank: number;
@@ -17,14 +19,35 @@ interface LeaderboardEntry {
 
 export default function LeaderboardsPage() {
   const [activeTab, setActiveTab] = useState<'flights' | 'miles' | 'countries' | 'hours'>('flights');
+  const [entries, setEntries] = useState<{ flights: LeaderboardEntry[]; miles: LeaderboardEntry[]; countries: LeaderboardEntry[]; hours: LeaderboardEntry[] }>({ flights: [], miles: [], countries: [], hours: [] });
+
+  useEffect(() => {
+    const load = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+      const snap = await getDocs(query(collection(db, 'flights'), where('userId', '==', user.uid)));
+      const flights = snap.docs.map(d => d.data() as any);
+      const username = user.displayName || user.email?.split('@')[0] || 'you';
+      const profilePicture = undefined;
+      const flightsCount = flights.length;
+      const miles = flights.reduce((s, f: any) => s + (Number(f?.route?.distance) || 0), 0);
+      const hours = Math.round(flights.reduce((s, f: any) => s + ((Number((f as any)?.route?.duration) || 0) / 60), 0));
+      const countries = new Set<string>();
+      flights.forEach((f: any) => { if (f?.route?.from?.country) countries.add(f.route.from.country); if (f?.route?.to?.country) countries.add(f.route.to.country); });
+
+      const base: LeaderboardEntry = { rank: 1, userId: user.uid, username, profilePicture, value: 0, badges: [], level: 1 };
+      setEntries({
+        flights: [{ ...base, value: flightsCount }],
+        miles: [{ ...base, value: miles }],
+        countries: [{ ...base, value: countries.size }],
+        hours: [{ ...base, value: hours }],
+      });
+    };
+    load();
+  }, []);
 
   // No dummy data: show empty state until real leaderboards are implemented
-  const leaderboards = {
-    flights: [] as LeaderboardEntry[],
-    miles: [] as LeaderboardEntry[],
-    countries: [] as LeaderboardEntry[],
-    hours: [] as LeaderboardEntry[],
-  };
+  const leaderboards = entries;
 
   const currentLeaderboard = leaderboards[activeTab];
 

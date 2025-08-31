@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
@@ -87,7 +87,7 @@ export default function ProfilePage() {
       const flightsQuery = query(
         collection(db, 'flights'),
         where('userId', '==', user.uid),
-        orderBy('date', 'desc')
+        orderBy('createdAt', 'desc')
       );
       
       const flightsSnapshot = await getDocs(flightsQuery);
@@ -123,7 +123,7 @@ export default function ProfilePage() {
     );
   }
 
-  // Compute collections from saved flights
+  // Compute collections and derived stats from saved flights
   const collections = (() => {
     const countries = new Set<string>();
     const airports = new Set<string>();
@@ -150,6 +150,22 @@ export default function ProfilePage() {
     };
   })();
 
+  const derivedStats = useMemo(() => {
+    const totalFlights = flights.length;
+    const totalMiles = flights.reduce((sum, f: any) => sum + (Number(f?.route?.distance) || 0), 0);
+    const totalHours = flights.reduce((sum, f: any) => sum + ((Number((f as any)?.route?.duration) || 0) / 60), 0);
+    return {
+      totalFlights,
+      totalMiles: Math.round(totalMiles),
+      totalHours: Math.round(totalHours),
+      airportsVisited: collections.airports.length,
+      countriesVisited: collections.countries.length,
+      aircraftTypes: collections.aircraftModels.length,
+      level: profile?.stats?.level || 1,
+      xp: profile?.stats?.xp || 0,
+    };
+  }, [flights, collections, profile?.stats]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
       {/* Header */}
@@ -172,9 +188,9 @@ export default function ProfilePage() {
                     <User className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400" />
                   </div>
                 )}
-                <button className="absolute bottom-0 right-0 bg-orange-500 rounded-full p-1.5 sm:p-2 hover:bg-orange-600 transition-colors">
+                <Link href="/settings" className="absolute bottom-0 right-0 bg-orange-500 rounded-full p-1.5 sm:p-2 hover:bg-orange-600 transition-colors">
                   <Edit className="h-3 w-3 sm:h-4 sm:w-4 text-gray-900" />
-                </button>
+                </Link>
               </div>
 
               {/* Profile Info */}
@@ -197,13 +213,13 @@ export default function ProfilePage() {
                 </div>
                 
                 {/* Level and XP */}
-                {profile.stats && (
+                {derivedStats && (
                   <div className="mt-2 sm:mt-3 flex items-center space-x-3 sm:space-x-4">
                     <div className="bg-gradient-to-r from-orange-500 to-yellow-500 text-gray-900 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-bold">
-                      Level {profile.stats.level}
+                      Level {derivedStats.level}
                     </div>
                     <div className="text-xs sm:text-sm text-gray-400">
-                      {profile.stats.xp.toLocaleString()} XP
+                      {derivedStats.xp.toLocaleString()} XP
                     </div>
                   </div>
                 )}
@@ -226,23 +242,23 @@ export default function ProfilePage() {
       </div>
 
       {/* Stats Cards */}
-      {profile.stats && (
+      {derivedStats && (
         <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-3 sm:p-4 shadow-lg text-center">
-              <div className="text-lg sm:text-2xl font-bold text-orange-400">{profile.stats.totalFlights}</div>
+              <div className="text-lg sm:text-2xl font-bold text-orange-400">{derivedStats.totalFlights}</div>
               <div className="text-xs sm:text-sm text-gray-400">Total Flights</div>
             </div>
             <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-3 sm:p-4 shadow-lg text-center">
-              <div className="text-lg sm:text-2xl font-bold text-blue-400">{profile.stats.totalMiles.toLocaleString()}</div>
+              <div className="text-lg sm:text-2xl font-bold text-blue-400">{derivedStats.totalMiles.toLocaleString()}</div>
               <div className="text-xs sm:text-sm text-gray-400">Miles Flown</div>
             </div>
             <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-3 sm:p-4 shadow-lg text-center">
-              <div className="text-lg sm:text-2xl font-bold text-green-400">{profile.stats.airportsVisited}</div>
+              <div className="text-lg sm:text-2xl font-bold text-green-400">{derivedStats.airportsVisited}</div>
               <div className="text-xs sm:text-sm text-gray-400">Airports</div>
             </div>
             <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-3 sm:p-4 shadow-lg text-center">
-              <div className="text-lg sm:text-2xl font-bold text-purple-400">{profile.stats.countriesVisited}</div>
+              <div className="text-lg sm:text-2xl font-bold text-purple-400">{derivedStats.countriesVisited}</div>
               <div className="text-xs sm:text-sm text-gray-400">Countries</div>
             </div>
           </div>
@@ -336,15 +352,15 @@ export default function ProfilePage() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Total Distance</span>
-                  <span className="text-white">{profile.stats?.totalMiles.toLocaleString()} miles</span>
+                  <span className="text-white">{derivedStats.totalMiles.toLocaleString()} miles</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Flight Hours</span>
-                  <span className="text-white">{profile.stats?.totalHours.toLocaleString()} hours</span>
+                  <span className="text-white">{derivedStats.totalHours.toLocaleString()} hours</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Aircraft Types</span>
-                  <span className="text-white">{profile.stats?.aircraftTypes}</span>
+                  <span className="text-white">{derivedStats.aircraftTypes}</span>
                 </div>
               </div>
             </div>
@@ -356,14 +372,14 @@ export default function ProfilePage() {
                   <div className="flex justify-between mb-1">
                     <span className="text-sm text-gray-400">Level Progress</span>
                     <span className="text-sm text-gray-400">
-                      {profile.stats?.xp} / {(profile.stats?.level || 1) * 1000} XP
+                      {derivedStats.xp} / {(derivedStats.level || 1) * 1000} XP
                     </span>
                   </div>
                   <div className="w-full bg-gray-700 rounded-full h-2">
                     <div 
                       className="bg-gradient-to-r from-orange-500 to-yellow-500 h-2 rounded-full"
                       style={{ 
-                        width: `${((profile.stats?.xp || 0) % 1000) / 10}%` 
+                        width: `${((derivedStats.xp || 0) % 1000) / 10}%` 
                       }}
                     ></div>
                   </div>
