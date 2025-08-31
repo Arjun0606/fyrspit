@@ -198,9 +198,7 @@ export default function SettingsPage() {
           // no-op
         }
       }
-      if (!resolvedPhoto) {
-        resolvedPhoto = user.photoURL || undefined;
-      }
+      // No Google photo fallback – only Firebase data (Firestore/Storage)
 
       const restoredData = {
         username: 'arjun0606',
@@ -376,10 +374,10 @@ export default function SettingsPage() {
                         title="Gender is set during onboarding"
                       >
                         <option value="">Select gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="non-binary">Non-binary</option>
-                        <option value="prefer-not-to-say">Prefer not to say</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Non-binary">Non-binary</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
                       </select>
                     </div>
                   </div>
