@@ -71,7 +71,7 @@ export default function ProfilePage() {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data() as UserProfile;
-        console.log('Profile loaded:', userData); // Debug log
+        console.log('Profile loaded:', JSON.stringify(userData, null, 2)); // Debug log
         setProfile(userData);
       } else {
         console.log('No user document found in Firestore');

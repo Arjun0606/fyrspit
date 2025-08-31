@@ -42,7 +42,7 @@ export default function FeedPage() {
       // Load profile for username/avatar fallback
       getDoc(doc(db, 'users', user.uid)).then(s => {
         if (s.exists()) {
-          console.log('Feed profile loaded:', s.data()); // Debug log
+          console.log('Feed profile loaded:', JSON.stringify(s.data(), null, 2)); // Debug log
           setProfile(s.data() as any);
         } else {
           console.log('No user document found for feed');
