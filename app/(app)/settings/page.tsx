@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, deleteField } from 'firebase/firestore';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { updateProfile, deleteUser } from 'firebase/auth';
@@ -57,9 +57,10 @@ export default function SettingsPage() {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data();
+        const firestoreAvatar: string | undefined = userData.profilePictureUrl || userData?.privacy?.profilePictureUrl;
         setSettings({
           username: userData.username,
-          profilePictureUrl: userData.profilePictureUrl,
+          profilePictureUrl: firestoreAvatar,
           age: userData.age,
           gender: userData.gender,
           homeAirport: userData.homeAirport,
@@ -77,16 +78,19 @@ export default function SettingsPage() {
           }
         });
 
-        // If no profilePictureUrl set in Firestore, try to auto-sync the uploaded one from Storage
-        if (!userData.profilePictureUrl) {
-          try {
-            const r = ref(storage, `profile-pictures/${user.uid}`);
-            const url = await getDownloadURL(r);
-            setSettings(prev => (prev ? { ...prev, profilePictureUrl: url } : prev));
-            await updateDoc(doc(db, 'users', user.uid), { profilePictureUrl: url });
-          } catch (_) {
-            // Ignore if no file exists in storage
+        // Always prefer Storage avatar when available; migrate from privacy.profilePictureUrl to root
+        try {
+          const r = ref(storage, `profile-pictures/${user.uid}`);
+          const storageUrl = await getDownloadURL(r);
+          if (storageUrl && storageUrl !== firestoreAvatar) {
+            setSettings(prev => (prev ? { ...prev, profilePictureUrl: storageUrl } : prev));
+            await updateDoc(doc(db, 'users', user.uid), { profilePictureUrl: storageUrl, 'privacy.profilePictureUrl': deleteField() });
+          } else if (!userData.profilePictureUrl && userData?.privacy?.profilePictureUrl) {
+            // Migrate field from privacy to root without changing URL
+            await updateDoc(doc(db, 'users', user.uid), { profilePictureUrl: userData.privacy.profilePictureUrl, 'privacy.profilePictureUrl': deleteField() });
           }
+        } catch (_) {
+          // No storage image or permission
         }
       }
     } catch (error) {
