@@ -186,21 +186,6 @@ export default function SettingsPage() {
         onboarded: true,
         xp: 200, // Restore original XP
         level: 2, // Restore original level
-        // Force update in profile display
-        statsCache: {
-          ...currentData.statsCache,
-          lifetime: {
-            ...currentData.statsCache?.lifetime,
-            flights: 2,
-            milesMi: 782,
-            milesKm: 1259,
-            hours: 2.5,
-            countries: ['India'],
-            airports: ['BOM', 'BLR', 'GOX'],
-            airlines: ['SpiceJet', 'Air India'],
-            aircraft: ['Boeing 737 MAX 8', 'Bombardier Dash 8']
-          }
-        }
         // Keep existing data but ensure proper structure
         statsCache: {
           lifetime: {
