@@ -129,6 +129,17 @@ export default function SettingsPage() {
     }
   };
 
+  const copyIdToken = async () => {
+    try {
+      const token = await auth.currentUser?.getIdToken(true);
+      if (!token) throw new Error('Not signed in');
+      await navigator.clipboard.writeText(token);
+      toast.success('ID token copied to clipboard');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to copy token');
+    }
+  };
+
   if (loading || loadingSettings) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -417,6 +428,12 @@ export default function SettingsPage() {
                   <h2 className="text-xl font-semibold text-white mb-6">Account Actions</h2>
                   
                   <div className="space-y-4">
+                    <button
+                      onClick={copyIdToken}
+                      className="w-full flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg transition-colors"
+                    >
+                      <span>Copy ID token</span>
+                    </button>
                     <button
                       onClick={signOut}
                       className="w-full flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg transition-colors"
