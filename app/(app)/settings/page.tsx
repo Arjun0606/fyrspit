@@ -169,6 +169,74 @@ export default function SettingsPage() {
     }
   };
 
+  const restoreOriginalProfile = async () => {
+    if (!user) return;
+    
+    try {
+      setSaving(true);
+      
+      // Restore original profile data with proper XP and stats
+      const restoredData = {
+        username: 'arjun0606',
+        profilePictureUrl: user.photoURL || settings?.profilePictureUrl, // Keep current pic for now
+        age: 24,
+        gender: 'Male',
+        homeAirport: 'Bangalore',
+        travelStyle: 'Explorer',
+        onboarded: true,
+        xp: 200, // Restore original XP
+        level: 2, // Restore original level
+        // Keep existing data but ensure proper structure
+        statsCache: {
+          lifetime: {
+            flights: 2,
+            milesMi: 782,
+            milesKm: 1259,
+            hours: 2.5,
+            countries: ['India'],
+            airports: ['BOM', 'BLR', 'GOX'],
+            airlines: ['SpiceJet', 'Air India'],
+            aircraft: ['Boeing 737 MAX 8', 'Bombardier Dash 8'],
+            continents: ['Asia'],
+            domesticInternational: { domestic: 2, international: 0 },
+            dayNightRatio: { day: 2, night: 0 },
+            weekdayWeekend: { weekday: 2, weekend: 0 },
+            seatClassBreakdown: { economy: 2, premium: 0, business: 0, first: 0 },
+            longest: { km: 518, mi: 322 },
+            shortest: { km: 264, mi: 164 },
+            topRoute: { count: 1 },
+            topAirport: { count: 1 },
+            topAirline: { count: 1 }
+          },
+          perYear: {}
+        }
+      };
+
+      await updateDoc(doc(db, 'users', user.uid), restoredData);
+      
+      // Update local state
+      setSettings(prev => ({
+        ...prev!,
+        username: 'arjun0606',
+        age: 24,
+        gender: 'Male',
+        homeAirport: 'Bangalore',
+        travelStyle: 'Explorer'
+      }));
+      
+      toast.success('Profile restored to original @arjun0606 with 200 XP!');
+      
+      // Refresh the page to show changes
+      setTimeout(() => window.location.reload(), 1000);
+      
+    } catch (error) {
+      console.error('Error restoring profile:', error);
+      toast.error('Failed to restore profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading || loadingSettings) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -475,6 +543,14 @@ export default function SettingsPage() {
                   <h2 className="text-xl font-semibold text-white mb-6">Account Actions</h2>
                   
                   <div className="space-y-4">
+                    <button
+                      onClick={restoreOriginalProfile}
+                      disabled={saving}
+                      className="w-full flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-3 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      <User className="h-5 w-5" />
+                      <span>Restore Original Profile (@arjun0606)</span>
+                    </button>
                     <button
                       onClick={copyIdToken}
                       className="w-full flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg transition-colors"
