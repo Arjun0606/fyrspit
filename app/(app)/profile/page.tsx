@@ -106,6 +106,111 @@ export default function ProfilePage() {
     }
   };
 
+  const handleShare = async () => {
+    if (!profile) return;
+    
+    const shareData = {
+      title: `${profile.username}'s Flight Profile - Fyrspit`,
+      text: `Check out @${profile.username}'s aviation journey on Fyrspit! 🛫 ${flights.length} flights logged, ${collections.countries.length} countries visited, ${Math.round(flights.reduce((sum, f: any) => sum + (Number(f?.route?.distance) || 0), 0)).toLocaleString()} miles flown!`,
+      url: `${window.location.origin}/profile/${profile.username}` // Future feature for public profiles
+    };
+
+    // Check if Web Share API is supported
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (error) {
+        console.log('Share cancelled or failed:', error);
+        fallbackShare(shareData);
+      }
+    } else {
+      fallbackShare(shareData);
+    }
+  };
+
+  const fallbackShare = (shareData: any) => {
+    // Create share URLs for different platforms
+    const encodedText = encodeURIComponent(shareData.text);
+    const encodedUrl = encodeURIComponent(shareData.url);
+    
+    const shareOptions = [
+      {
+        name: 'Twitter/X',
+        url: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
+        color: 'bg-black hover:bg-gray-800'
+      },
+      {
+        name: 'Facebook',
+        url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`,
+        color: 'bg-blue-600 hover:bg-blue-700'
+      },
+      {
+        name: 'LinkedIn',
+        url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}&summary=${encodedText}`,
+        color: 'bg-blue-500 hover:bg-blue-600'
+      },
+      {
+        name: 'WhatsApp',
+        url: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
+        color: 'bg-green-500 hover:bg-green-600'
+      },
+      {
+        name: 'Copy Link',
+        action: () => {
+          navigator.clipboard.writeText(shareData.url).then(() => {
+            alert('Profile link copied to clipboard!');
+          });
+        },
+        color: 'bg-gray-600 hover:bg-gray-700'
+      }
+    ];
+
+    // Create and show modal
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+      <div class="bg-gray-800 rounded-lg p-6 max-w-sm w-full">
+        <h3 class="text-white text-lg font-bold mb-4">Share Profile</h3>
+        <div class="space-y-2">
+          ${shareOptions.map((option, index) => `
+            <button 
+              onclick="${option.action ? 'this.clickAction()' : `window.open('${option.url}', '_blank')`}" 
+              class="w-full flex items-center justify-center px-4 py-3 ${option.color} text-white rounded-lg transition-colors font-medium"
+            >
+              ${option.name}
+            </button>
+          `).join('')}
+        </div>
+        <button 
+          onclick="this.parentElement.parentElement.remove()" 
+          class="w-full mt-4 px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    `;
+
+    // Add copy link action
+    const copyButton = modal.querySelector('button:nth-child(5)') as HTMLElement;
+    if (copyButton) {
+      copyButton.onclick = () => {
+        navigator.clipboard.writeText(shareData.url).then(() => {
+          alert('Profile link copied to clipboard!');
+          modal.remove();
+        });
+      };
+    }
+
+    document.body.appendChild(modal);
+    
+    // Close modal when clicking outside
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    };
+  };
+
   if (loading || loadingProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -230,7 +335,10 @@ export default function ProfilePage() {
 
             {/* Action Buttons */}
             <div className="flex items-center space-x-2 sm:space-x-3 self-end sm:self-auto">
-              <button className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors text-sm">
+              <button 
+                onClick={() => handleShare()}
+                className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors text-sm"
+              >
                 <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Share</span>
               </button>
