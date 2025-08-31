@@ -35,7 +35,23 @@ export function Navigation({ currentPath }: NavigationProps) {
   useEffect(() => {
     const u = auth.currentUser;
     if (!u) return;
-    getDoc(doc(db, 'users', u.uid)).then(s => setProfile(s.exists() ? (s.data() as any) : null)).catch(() => {});
+    getDoc(doc(db, 'users', u.uid)).then(s => {
+      if (s.exists()) {
+        setProfile(s.data() as any);
+      } else {
+        // Fallback to Firebase auth data
+        setProfile({
+          username: u.email?.split('@')[0] || 'user',
+          profilePictureUrl: u.photoURL || undefined
+        });
+      }
+    }).catch(() => {
+      // Fallback to Firebase auth data on error
+      setProfile({
+        username: u.email?.split('@')[0] || 'user',
+        profilePictureUrl: u.photoURL || undefined
+      });
+    });
   }, []);
 
   const handleSignOut = async () => {

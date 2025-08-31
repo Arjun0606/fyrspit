@@ -40,7 +40,23 @@ export default function FeedPage() {
     if (user) {
       loadRecentFlights();
       // Load profile for username/avatar fallback
-      getDoc(doc(db, 'users', user.uid)).then(s => setProfile(s.exists() ? (s.data() as any) : null)).catch(() => {});
+      getDoc(doc(db, 'users', user.uid)).then(s => {
+        if (s.exists()) {
+          setProfile(s.data() as any);
+        } else {
+          // Fallback to Firebase auth data
+          setProfile({
+            username: user.email?.split('@')[0] || 'user',
+            profilePictureUrl: user.photoURL || undefined
+          });
+        }
+      }).catch(() => {
+        // Fallback to Firebase auth data on error
+        setProfile({
+          username: user.email?.split('@')[0] || 'user',
+          profilePictureUrl: user.photoURL || undefined
+        });
+      });
     }
   }, [user]);
 

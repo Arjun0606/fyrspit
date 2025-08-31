@@ -72,9 +72,28 @@ export default function ProfilePage() {
       if (userDoc.exists()) {
         const userData = userDoc.data() as UserProfile;
         setProfile(userData);
+      } else {
+        // Create a fallback profile from Firebase auth data
+        const fallbackProfile: UserProfile = {
+          username: user.email?.split('@')[0] || 'user',
+          profilePictureUrl: user.photoURL || undefined,
+          homeAirport: 'Unknown',
+          travelStyle: 'Explorer',
+          onboarded: false,
+        };
+        setProfile(fallbackProfile);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
+      // Even if there's an error, create a basic fallback
+      const fallbackProfile: UserProfile = {
+        username: user.email?.split('@')[0] || 'user',
+        profilePictureUrl: user.photoURL || undefined,
+        homeAirport: 'Unknown',
+        travelStyle: 'Explorer',
+        onboarded: false,
+      };
+      setProfile(fallbackProfile);
     } finally {
       setLoadingProfile(false);
     }
