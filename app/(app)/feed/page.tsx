@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
 import { Plus, TrendingUp, MapPin, Plane, Clock, Trophy, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -34,10 +34,13 @@ export default function FeedPage() {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loadingFlights, setLoadingFlights] = useState(true);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [profile, setProfile] = useState<{ username?: string; profilePictureUrl?: string } | null>(null);
 
   useEffect(() => {
     if (user) {
       loadRecentFlights();
+      // Load profile for username/avatar fallback
+      getDoc(doc(db, 'users', user.uid)).then(s => setProfile(s.exists() ? (s.data() as any) : null)).catch(() => {});
     }
   }, [user]);
 
@@ -187,23 +190,15 @@ export default function FeedPage() {
               <div key={flight.id} className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6 shadow-lg hover:bg-gray-800/80 transition-colors">
                 {/* User Header */}
                 <div className="flex items-center space-x-3 mb-4">
-                  {flight.userProfilePicture ? (
-                    <Image
-                      src={flight.userProfilePicture}
-                      alt={flight.userUsername}
-                      width={48}
-                      height={48}
-                      className="rounded-full object-cover"
-                    />
+                  { (profile?.profilePictureUrl || (flight as any).userProfilePicture) ? (
+                    <img src={(flight as any).userProfilePicture || profile?.profilePictureUrl || ''} alt={profile?.username || (flight as any).userUsername || 'user'} className="w-12 h-12 rounded-full object-cover" />
                   ) : (
                     <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold">
-                        {flight.userUsername?.charAt(0).toUpperCase() || 'U'}
-                      </span>
+                      <span className="text-white font-semibold">{(profile?.username || (flight as any).userUsername || 'you').charAt(0).toUpperCase()}</span>
                     </div>
                   )}
                   <div>
-                    <div className="font-semibold text-white">@{flight.userUsername || 'you'}</div>
+                    <div className="font-semibold text-white">@{profile?.username || (flight as any).userUsername || 'you'}</div>
                     <div className="text-sm text-gray-400 flex items-center space-x-1">
                       <Clock className="h-3 w-3" />
                       <span>{new Date(flight.createdAt).toLocaleDateString()}</span>

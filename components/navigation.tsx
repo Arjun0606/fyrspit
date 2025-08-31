@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import {
   Home,
   Plus,
@@ -29,6 +30,13 @@ interface NavigationProps {
 export function Navigation({ currentPath }: NavigationProps) {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const router = useRouter();
+  const [profile, setProfile] = useState<{ username?: string; profilePictureUrl?: string } | null>(null);
+
+  useEffect(() => {
+    const u = auth.currentUser;
+    if (!u) return;
+    getDoc(doc(db, 'users', u.uid)).then(s => setProfile(s.exists() ? (s.data() as any) : null)).catch(() => {});
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -92,9 +100,13 @@ export function Navigation({ currentPath }: NavigationProps) {
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="flex items-center space-x-2 p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
               >
-                <div className="h-8 w-8 bg-gray-700 rounded-full flex items-center justify-center">
-                  <User className="h-4 w-4" />
-                </div>
+                {profile?.profilePictureUrl ? (
+                  <img src={profile.profilePictureUrl} alt="avatar" className="h-8 w-8 rounded-full object-cover" />
+                ) : (
+                  <div className="h-8 w-8 bg-gray-700 rounded-full flex items-center justify-center">
+                    <User className="h-4 w-4" />
+                  </div>
+                )}
               </button>
 
               {isProfileMenuOpen && (

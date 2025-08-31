@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Search, TrendingUp, MapPin, Users, Plane, Trophy, Filter, Globe } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 
 interface TrendingRoute {
@@ -87,11 +87,13 @@ export default function ExplorePage() {
       setAircrafts(Array.from(aircraftMap.entries()).map(([type, v]) => ({ type, flights: v.flights, airlines: Array.from(v.airlines) })));
 
       // Top aviators (just the current user for now)
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const profile = userDoc.exists() ? (userDoc.data() as any) : {};
       setUsers([
         {
           id: user.uid,
-          username: user.displayName || user.email?.split('@')[0] || 'you',
-          profilePicture: user.photoURL || undefined,
+          username: (profile.username || user.email?.split('@')[0] || 'you').toString(),
+          profilePicture: profile.profilePictureUrl || user.photoURL || undefined,
           totalFlights: flights.length,
           level: 1,
           badges: [],
