@@ -55,12 +55,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const normalizedDate = (date || new Date().toISOString().slice(0, 10));
+
+    // Prevent duplicates: same user + date + flightNumber + route
+    const dupKey = `${decoded.uid}:${normalizedDate}:${String(flightNumber).toUpperCase()}:${from?.iata}-${to?.iata}`;
+    const dupRef = adminDb.collection('flight_keys').doc(dupKey);
+    const dupSnap = await dupRef.get();
+    if (dupSnap.exists) {
+      return NextResponse.json({ error: 'Duplicate flight for this date already exists' }, { status: 409 });
+    }
+
     const distance = typeof distanceMi === 'number' && distanceMi > 0 ? distanceMi : 0;
     const durationMin = typeof durationMinutes === 'number' && durationMinutes > 0 ? durationMinutes : 0;
 
     // Build document (drop undefineds)
     const docPayload: any = {
       userId: decoded.uid,
+      userUsername: decoded.name || decoded.email?.split('@')[0] || 'user',
+      userDisplayName: decoded.name || '',
       flightNumber,
       airline: airline || {},
       aircraft: aircraft || {},
@@ -83,15 +95,16 @@ export async function POST(req: NextRequest) {
         xpEarned: 50 + Math.floor(distance / 50),
       },
       visibility,
-      reviewShort,
-      date: date || new Date().toISOString().slice(0, 10),
+      reviewShort: '',
+      date: normalizedDate,
       createdAt: new Date(),
     };
 
-    // Remove undefined recursively
     const clean = JSON.parse(JSON.stringify(docPayload));
 
     const ref = await adminDb.collection('flights').add(clean);
+    await dupRef.set({ createdAt: new Date(), flightId: ref.id });
+
     return NextResponse.json({ flightId: ref.id });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || 'Failed to save flight' }, { status: 500 });
