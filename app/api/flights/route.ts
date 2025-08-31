@@ -68,11 +68,18 @@ export async function POST(req: NextRequest) {
     const distance = typeof distanceMi === 'number' && distanceMi > 0 ? distanceMi : 0;
     const durationMin = typeof durationMinutes === 'number' && durationMinutes > 0 ? durationMinutes : 0;
 
+    // Pull user profile for username/photo if present
+    const userDoc = await adminDb.collection('users').doc(decoded.uid).get();
+    const userData = userDoc.exists ? (userDoc.data() as any) : {};
+    const username = userData?.username || (decoded as any).user_name || decoded.name || decoded.email?.split('@')[0] || 'user';
+    const profilePictureUrl = userData?.profilePictureUrl || (decoded as any).picture || '';
+
     // Build document (drop undefineds)
     const docPayload: any = {
       userId: decoded.uid,
-      userUsername: (decoded as any).user_name || decoded.name || decoded.email?.split('@')[0] || 'user',
-      userDisplayName: decoded.name || decoded.email?.split('@')[0] || '',
+      userUsername: username,
+      userDisplayName: decoded.name || decoded.email?.split('@')[0] || username,
+      userProfilePicture: profilePictureUrl || undefined,
       flightNumber,
       airline: airline || {},
       aircraft: aircraft || {},

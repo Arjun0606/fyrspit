@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Search, TrendingUp, MapPin, Users, Plane, Trophy, Filter, Globe } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
 
 interface TrendingRoute {
   from: { iata: string; city: string; country: string };
@@ -34,15 +36,63 @@ interface FeaturedAirport {
 export default function ExplorePage() {
   const [activeTab, setActiveTab] = useState<'routes' | 'users' | 'airports' | 'aircraft'>('routes');
   const [searchQuery, setSearchQuery] = useState('');
+  const [routes, setRoutes] = useState<TrendingRoute[]>([]);
+  const [airports, setAirports] = useState<FeaturedAirport[]>([]);
+  const [aircrafts, setAircrafts] = useState<{ type: string; flights: number; airlines: string[] }[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+      const snap = await getDocs(query(collection(db, 'flights'), where('userId', '==', user.uid)));
+      const flights = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+
+      // Routes aggregate
+      const routeMap = new Map<string, { from: any; to: any; count: number; distance: number; airlines: Set<string> }>();
+      for (const f of flights) {
+        const key = `${f.route?.from?.iata}-${f.route?.to?.iata}`;
+        if (!routeMap.has(key)) {
+          routeMap.set(key, { from: f.route?.from, to: f.route?.to, count: 0, distance: f.route?.distance || 0, airlines: new Set<string>() });
+        }
+        const entry = routeMap.get(key)!;
+        entry.count += 1;
+        if (f.airline?.name) entry.airlines.add(f.airline.name);
+      }
+      setRoutes(Array.from(routeMap.values()).map(v => ({ from: v.from, to: v.to, flightCount: v.count, distance: v.distance, popularAirlines: Array.from(v.airlines) })));
+
+      // Airports aggregate
+      const airportMap = new Map<string, { iata: string; name: string; city: string; country: string; recentFlights: number; popularWith: Set<string> }>();
+      for (const f of flights) {
+        for (const side of ['from', 'to'] as const) {
+          const a = f.route?.[side];
+          if (!a?.iata) continue;
+          if (!airportMap.has(a.iata)) airportMap.set(a.iata, { iata: a.iata, name: a.name || '', city: a.city || '', country: a.country || '', recentFlights: 0, popularWith: new Set<string>() });
+          const entry = airportMap.get(a.iata)!;
+          entry.recentFlights += 1;
+          if (f.airline?.name) entry.popularWith.add(f.airline.name);
+        }
+      }
+      setAirports(Array.from(airportMap.values()).map(v => ({ ...v, popularWith: Array.from(v.popularWith) })));
+
+      // Aircraft aggregate
+      const aircraftMap = new Map<string, { flights: number; airlines: Set<string> }>();
+      for (const f of flights) {
+        const type = `${f.aircraft?.manufacturer || 'Unknown'} ${f.aircraft?.model || ''}`.trim();
+        if (!aircraftMap.has(type)) aircraftMap.set(type, { flights: 0, airlines: new Set<string>() });
+        const entry = aircraftMap.get(type)!;
+        entry.flights += 1;
+        if (f.airline?.name) entry.airlines.add(f.airline.name);
+      }
+      setAircrafts(Array.from(aircraftMap.entries()).map(([type, v]) => ({ type, flights: v.flights, airlines: Array.from(v.airlines) })));
+    };
+    load();
+  }, []);
 
   // No dummy data placeholders
-  const trendingRoutes: TrendingRoute[] = [];
-
+  const trendingRoutes: TrendingRoute[] = routes;
   const popularUsers: PopularUser[] = [];
-
-  const featuredAirports: FeaturedAirport[] = [];
-
-  const aircraftTypes: { type: string; flights: number; airlines: string[] }[] = [];
+  const featuredAirports: FeaturedAirport[] = airports;
+  const aircraftTypes: { type: string; flights: number; airlines: string[] }[] = aircrafts;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
