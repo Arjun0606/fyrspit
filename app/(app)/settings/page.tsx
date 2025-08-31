@@ -572,20 +572,6 @@ export default function SettingsPage() {
                   
                   <div className="space-y-4">
                     <button
-                      onClick={restoreOriginalProfile}
-                      disabled={saving}
-                      className="w-full flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-3 rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      <User className="h-5 w-5" />
-                      <span>Restore Original Profile (@arjun0606)</span>
-                    </button>
-                    <button
-                      onClick={copyIdToken}
-                      className="w-full flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg transition-colors"
-                    >
-                      <span>Copy ID token</span>
-                    </button>
-                    <button
                       onClick={signOut}
                       className="w-full flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg transition-colors"
                     >
