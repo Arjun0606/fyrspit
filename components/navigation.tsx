@@ -64,7 +64,7 @@ export function Navigation({ currentPath }: NavigationProps) {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link href="/feed" className="flex items-center space-x-2">
-              <img src="/logo/fyrspit-mark.svg" alt="Fyrspit" className="h-8 w-8" />
+              <img src="/logo/fyrspit.png" alt="Fyrspit" className="h-8 w-8" />
               <span className="text-xl font-bold">Fyrspit</span>
             </Link>
 

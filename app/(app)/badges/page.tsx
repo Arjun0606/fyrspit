@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { User } from '@/types';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -84,8 +84,8 @@ export default function BadgesPage() {
         icon: <Plane className="h-6 w-6" />,
         category: 'flights',
         criteria: 'Log 1 flight',
-        earned: (stats.flights || 0) >= 1,
-        progress: { current: Math.min(stats.flights || 0, 1), target: 1 }
+        earned: (userData as any)?.computed?.flightsCount >= 1 || (stats.flights || 0) >= 1,
+        progress: { current: Math.min(((userData as any)?.computed?.flightsCount || stats.flights || 0), 1), target: 1 }
       },
       {
         id: 'frequent-flyer',
@@ -95,8 +95,8 @@ export default function BadgesPage() {
         category: 'flights',
         criteria: 'Log 50 flights',
         tier: 'silver',
-        earned: (stats.flights || 0) >= 50,
-        progress: { current: Math.min(stats.flights || 0, 50), target: 50 }
+        earned: ((userData as any)?.computed?.flightsCount || stats.flights || 0) >= 50,
+        progress: { current: Math.min(((userData as any)?.computed?.flightsCount || stats.flights || 0), 50), target: 50 }
       },
       {
         id: 'century-club',

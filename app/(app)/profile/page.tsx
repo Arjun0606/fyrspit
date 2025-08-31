@@ -447,18 +447,7 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <div className="card lg:col-span-2">
-              <h3 className="text-lg font-semibold mb-4">Manufacturers Unlocked ({collections.manufacturers.length})</h3>
-              {collections.manufacturers.length === 0 ? (
-                <p className="text-gray-400 text-sm">Log flights to unlock manufacturers.</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {collections.manufacturers.map((man) => (
-                    <span key={man} className="px-2 py-1 bg-green-500/20 border border-green-500/30 rounded text-xs text-green-300">{man}</span>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Removed Manufacturers Unlocked card */}
           </div>
         )}
 

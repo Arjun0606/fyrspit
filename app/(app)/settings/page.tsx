@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { updateProfile, deleteUser } from 'firebase/auth';
 import { User, Bell, Shield, Globe, Plane, Camera, LogOut, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -87,13 +89,40 @@ export default function SettingsPage() {
 
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'users', user.uid), settings);
+      // Check username availability if changed
+      if (settings.username) {
+        const q = query(collection(db, 'users'), where('username', '==', settings.username.toLowerCase()));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const conflict = snap.docs.find(d => d.id !== user.uid);
+          if (conflict) throw new Error('Username is already taken');
+        }
+      }
+
+      await updateDoc(doc(db, 'users', user.uid), {
+        ...settings,
+        username: settings.username?.toLowerCase?.() || settings.username,
+      });
       toast.success('Settings saved successfully!');
     } catch (error) {
       console.error('Error saving settings:', error);
       toast.error('Failed to save settings');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const uploadAvatar = async (file: File) => {
+    if (!user) return;
+    try {
+      const r = ref(storage, `profile-pictures/${user.uid}`);
+      await uploadBytes(r, file);
+      const url = await getDownloadURL(r);
+      setSettings(prev => prev ? { ...prev, profilePictureUrl: url } : prev);
+      await updateDoc(doc(db, 'users', user.uid), { profilePictureUrl: url });
+      toast.success('Profile photo updated');
+    } catch (e) {
+      toast.error('Failed to upload photo');
     }
   };
 
@@ -209,9 +238,21 @@ export default function SettingsPage() {
                     <input
                       type="text"
                       value={settings.username}
-                      onChange={(e) => setSettings({ ...settings, username: e.target.value })}
+                      onChange={(e) => setSettings({ ...settings, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
                       className="input w-full"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Profile picture</label>
+                    <div className="flex items-center space-x-3">
+                      {settings.profilePictureUrl ? (
+                        <img src={settings.profilePictureUrl} alt="avatar" className="h-14 w-14 rounded-full object-cover" />
+                      ) : (
+                        <div className="h-14 w-14 rounded-full bg-gray-700"></div>
+                      )}
+                      <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); }} />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
