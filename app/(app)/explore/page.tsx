@@ -237,12 +237,10 @@ export default function ExplorePage() {
                     <div className="flex items-center space-x-4 mb-4">
                       <div className="relative">
                         {user.profilePicture ? (
-                          <Image
+                          <img
                             src={user.profilePicture}
                             alt={user.username}
-                            width={64}
-                            height={64}
-                            className="rounded-full object-cover"
+                            className="w-16 h-16 rounded-full object-cover"
                           />
                         ) : (
                           <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center">

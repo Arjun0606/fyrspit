@@ -60,7 +60,6 @@ export function Navigation({ currentPath }: NavigationProps) {
     { icon: User, label: 'Profile', href: '/profile' },
     { icon: Trophy, label: 'Leaderboards', href: '/leaderboards' },
     { icon: Award, label: 'Badges', href: '/badges' },
-    { icon: Upload, label: 'Import', href: '/import' },
     { icon: Settings, label: 'Settings', href: '/settings' },
   ];
 
