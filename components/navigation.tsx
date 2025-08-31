@@ -37,7 +37,7 @@ export function Navigation({ currentPath }: NavigationProps) {
     if (!u) return;
     getDoc(doc(db, 'users', u.uid)).then(s => {
       if (s.exists()) {
-        console.log('Navigation profile loaded:', JSON.stringify(s.data(), null, 2)); // Debug log
+
         setProfile(s.data() as any);
       } else {
         console.log('No user document found for navigation');
