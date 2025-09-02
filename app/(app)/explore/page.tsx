@@ -139,7 +139,7 @@ export default function ExplorePage() {
 
   // No dummy data placeholders
   const trendingRoutes: TrendingRoute[] = routes;
-  const popularUsers: PopularUser[] = users.filter(u => u.totalFlights > 0);
+  const popularUsers: PopularUser[] = users; // Show all users from leaderboard, already ranked by API
   const featuredAirports: FeaturedAirport[] = airports;
   const aircraftTypes: { type: string; flights: number; airlines: string[] }[] = aircrafts;
 
