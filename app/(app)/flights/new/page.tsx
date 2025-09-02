@@ -117,7 +117,7 @@ export default function NewFlightPage() {
           // Set sensible defaults
           visibility: 'public',
           reviewShort: `Great flight on ${flightData.airline?.name || 'this airline'}!`,
-          date: new Date().toISOString().split('T')[0], // Today's date
+          date: flightDate, // Use user-selected date
         }),
       });
 
