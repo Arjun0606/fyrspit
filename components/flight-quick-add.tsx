@@ -24,39 +24,10 @@ export function FlightQuickAdd({ onSuccess }: FlightQuickAddProps) {
       return;
     }
 
-    setIsLoading(true);
-    
-    try {
-      // Looking up flight data...
-      
-      const response = await fetch('/api/flights/lookup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          flightNumber: flightNumber.trim().toUpperCase()
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Flight not found');
-      }
-
-      const result = await response.json();
-      
-      if (result.success && result.data.flight) {
-        setFlightData(result.data);
-        toast.success(`✈️ Found ${flightNumber}! ${result.data.flight.route.departure.city} → ${result.data.flight.route.arrival.city}`);
-      } else {
-        throw new Error('Flight data not available');
-      }
-
-    } catch (error) {
-      console.error('Flight lookup error:', error);
-      toast.error('Flight not found. Please check the flight number.');
-      setFlightData(null);
-    } finally {
-      setIsLoading(false);
-    }
+    // Redirect to proper flight logging flow that requires date
+    toast.error('Please use the proper flight logging that requires flight number + date for accurate data');
+    router.push('/flights/new');
+    return;
   };
 
   const handleAddFlight = async () => {

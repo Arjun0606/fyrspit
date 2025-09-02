@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { collection, query, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, doc, getDoc, where } from 'firebase/firestore';
 import { Plus, TrendingUp, MapPin, Plane, Clock, Trophy, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FlightQuickAdd } from '@/components/flight-quick-add';
+
 
 interface Flight {
   id: string;
@@ -33,7 +33,7 @@ export default function FeedPage() {
   const [user, loading] = useAuthState(auth);
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loadingFlights, setLoadingFlights] = useState(true);
-  const [showQuickAdd, setShowQuickAdd] = useState(false);
+
   const [profile, setProfile] = useState<{ username?: string; profilePictureUrl?: string } | null>(null);
 
   useEffect(() => {
@@ -54,10 +54,12 @@ export default function FeedPage() {
   }, [user]);
 
   const loadRecentFlights = async () => {
+    if (!user) return;
+    
     try {
       const flightsQuery = query(
         collection(db, 'flights'),
-        orderBy('createdAt', 'desc'),
+        where('userId', '==', user.uid),
         limit(20)
       );
       
@@ -66,6 +68,9 @@ export default function FeedPage() {
         id: doc.id,
         ...doc.data()
       })) as Flight[];
+      
+      // Sort by createdAt on client side to avoid index issues
+      recentFlights.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
       setFlights(recentFlights);
     } catch (error) {
@@ -106,41 +111,20 @@ export default function FeedPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div className="flex-1 pr-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Your Feed</h1>
-            <p className="text-gray-400 text-sm sm:text-base">Latest flights from the aviation community</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Your Flights</h1>
+            <p className="text-gray-400 text-sm sm:text-base">Your personal flight log and statistics</p>
           </div>
           
-          <button
-            onClick={() => setShowQuickAdd(!showQuickAdd)}
+          <Link
+            href="/flights/new"
             className="btn-primary flex items-center space-x-1 sm:space-x-2 shrink-0"
           >
             <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
             <span className="text-sm sm:text-base">Log Flight</span>
-          </button>
+          </Link>
         </div>
 
-        {/* Quick Add Flight */}
-        {showQuickAdd && (
-          <div className="mb-6 sm:mb-8">
-            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base sm:text-lg font-semibold text-white">Quick Add Flight</h3>
-                <button
-                  onClick={() => setShowQuickAdd(false)}
-                  className="text-gray-400 hover:text-gray-300 text-xl sm:text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-              <FlightQuickAdd 
-                onSuccess={() => {
-                  setShowQuickAdd(false);
-                  loadRecentFlights();
-                }}
-              />
-            </div>
-          </div>
-        )}
+
 
         {/* Stats Overview */}
         <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
