@@ -59,12 +59,14 @@ export default function ProfilePage() {
             return;
           }
           
-          // TODO: Check friendship status for 'friends' visibility
-          // For now, allow public and own profile only
+          // Check friendship status for 'friends' visibility
           if (!isOwnProfile && profileVisibility === 'friends') {
-            setCanViewProfile(false);
-            setLoading(false);
-            return;
+            const userFriends = userData?.friends || [];
+            if (!userFriends.includes(currentUserId)) {
+              setCanViewProfile(false);
+              setLoading(false);
+              return;
+            }
           }
           
           setProfileUser({

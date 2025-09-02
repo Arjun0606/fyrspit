@@ -212,10 +212,9 @@ async function checkFlightViewPermission(targetUserId: string, currentUserId: st
   if (flightVisibility === 'friends') {
     if (!currentUserId) return false; // Must be logged in
     
-    // Check if they are friends (this would need to be implemented)
-    // For now, return false until friend system is fully implemented
-    // TODO: Check friendship status
-    return false;
+    // Check if they are friends
+    const targetUserFriends = targetUser?.friends || [];
+    return targetUserFriends.includes(currentUserId);
   }
   
   return false;

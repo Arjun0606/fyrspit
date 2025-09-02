@@ -23,12 +23,14 @@ export default function SocialPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [friends, setFriends] = useState<User[]>([]);
+  const [friendRequests, setFriendRequests] = useState<{incoming: any[], outgoing: any[]}>({incoming: [], outgoing: []});
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'discover' | 'friends'>('discover');
+  const [activeTab, setActiveTab] = useState<'discover' | 'friends' | 'requests'>('discover');
 
   useEffect(() => {
     if (user) {
       loadFriends();
+      loadFriendRequests();
     }
   }, [user]);
 
@@ -70,6 +72,24 @@ export default function SocialPage() {
     }
   };
 
+  const loadFriendRequests = async () => {
+    if (!user) return;
+
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch('/api/social/friend-requests', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFriendRequests(data);
+      }
+    } catch (error) {
+      console.error('Error loading friend requests:', error);
+    }
+  };
+
   const sendFriendRequest = async (targetUserId: string, username: string) => {
     if (!user) return;
 
@@ -89,12 +109,73 @@ export default function SocialPage() {
 
       if (response.ok) {
         toast.success(`Friend request sent to @${username}`);
+        loadFriendRequests(); // Refresh requests
       } else {
-        toast.error('Failed to send friend request');
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to send friend request');
       }
     } catch (error) {
       console.error('Error sending friend request:', error);
       toast.error('Failed to send friend request');
+    }
+  };
+
+  const acceptFriendRequest = async (fromUserId: string, username: string) => {
+    if (!user) return;
+
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch('/api/social/friends', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'accept_request',
+          targetUserId: fromUserId
+        })
+      });
+
+      if (response.ok) {
+        toast.success(`@${username} is now your friend!`);
+        loadFriends();
+        loadFriendRequests();
+      } else {
+        toast.error('Failed to accept friend request');
+      }
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+      toast.error('Failed to accept friend request');
+    }
+  };
+
+  const rejectFriendRequest = async (fromUserId: string, username: string) => {
+    if (!user) return;
+
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch('/api/social/friends', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'reject_request',
+          targetUserId: fromUserId
+        })
+      });
+
+      if (response.ok) {
+        toast.success(`Friend request from @${username} rejected`);
+        loadFriendRequests();
+      } else {
+        toast.error('Failed to reject friend request');
+      }
+    } catch (error) {
+      console.error('Error rejecting friend request:', error);
+      toast.error('Failed to reject friend request');
     }
   };
 
@@ -139,6 +220,24 @@ export default function SocialPage() {
             >
               <Users className="h-4 w-4 sm:h-5 sm:w-5" />
               <span className="text-sm sm:text-base">Friends ({friends.length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('requests')}
+              className={`flex items-center space-x-2 py-3 sm:py-4 px-2 border-b-2 transition-colors ${
+                activeTab === 'requests'
+                  ? 'border-orange-500 text-orange-400'
+                  : 'border-transparent text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-sm sm:text-base">
+                Requests ({friendRequests.incoming.length})
+                {friendRequests.incoming.length > 0 && (
+                  <span className="ml-1 bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {friendRequests.incoming.length}
+                  </span>
+                )}
+              </span>
             </button>
           </nav>
         </div>
@@ -305,6 +404,138 @@ export default function SocialPage() {
                 </div>
               ))
             )}
+          </div>
+        )}
+
+        {/* Requests Tab */}
+        {activeTab === 'requests' && (
+          <div className="space-y-6">
+            {/* Incoming Requests */}
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Incoming Requests</h3>
+              {friendRequests.incoming.length === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  No incoming friend requests
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {friendRequests.incoming.map((request) => (
+                    <div key={request.id} className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6 shadow-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                          {request.profilePictureUrl ? (
+                            <Image
+                              src={request.profilePictureUrl}
+                              alt={request.username}
+                              width={48}
+                              height={48}
+                              className="rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                              <span className="text-white text-lg font-semibold">
+                                {request.username.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          
+                          <div className="flex-1 min-w-0">
+                            <Link 
+                              href={`/profile/${request.username}`}
+                              className="text-lg font-semibold text-white hover:text-orange-400 transition-colors truncate block"
+                            >
+                              @{request.username}
+                            </Link>
+                            <div className="flex items-center space-x-4 text-sm text-gray-400 mt-1">
+                              <div className="flex items-center space-x-1">
+                                <Trophy className="h-3 w-3" />
+                                <span>Level {request.level}</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Plane className="h-3 w-3" />
+                                <span>{request.totalFlights} flights</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => acceptFriendRequest(request.from, request.username)}
+                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg transition-colors text-sm"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => rejectFriendRequest(request.from, request.username)}
+                            className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg transition-colors text-sm"
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Outgoing Requests */}
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Sent Requests</h3>
+              {friendRequests.outgoing.length === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  No pending friend requests sent
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {friendRequests.outgoing.map((request) => (
+                    <div key={request.id} className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6 shadow-lg">
+                      <div className="flex items-center space-x-3 sm:space-x-4">
+                        {request.profilePictureUrl ? (
+                          <Image
+                            src={request.profilePictureUrl}
+                            alt={request.username}
+                            width={48}
+                            height={48}
+                            className="rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                            <span className="text-white text-lg font-semibold">
+                              {request.username.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        
+                        <div className="flex-1">
+                          <Link 
+                            href={`/profile/${request.username}`}
+                            className="text-lg font-semibold text-white hover:text-orange-400 transition-colors"
+                          >
+                            @{request.username}
+                          </Link>
+                          <div className="flex items-center space-x-4 text-sm text-gray-400 mt-1">
+                            <div className="flex items-center space-x-1">
+                              <Trophy className="h-3 w-3" />
+                              <span>Level {request.level}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Plane className="h-3 w-3" />
+                              <span>{request.totalFlights} flights</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-yellow-400 text-sm">
+                          Pending
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
