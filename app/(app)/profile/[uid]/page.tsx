@@ -31,6 +31,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('flights');
   const [isFollowing, setIsFollowing] = useState(false);
+  const [canViewProfile, setCanViewProfile] = useState(true);
 
   const isOwnProfile = currentUser?.uid === uid;
 
@@ -41,6 +42,31 @@ export default function ProfilePage() {
         const userDoc = await getDoc(doc(db, 'users', uid));
         if (userDoc.exists()) {
           const userData = userDoc.data();
+          
+          // Check profile visibility
+          const profileVisibility = userData?.privacy?.profileVisibility || 'public';
+          const currentUserId = currentUser?.uid;
+          
+          if (!isOwnProfile && profileVisibility === 'private') {
+            setCanViewProfile(false);
+            setLoading(false);
+            return;
+          }
+          
+          if (!isOwnProfile && profileVisibility === 'friends' && !currentUserId) {
+            setCanViewProfile(false);
+            setLoading(false);
+            return;
+          }
+          
+          // TODO: Check friendship status for 'friends' visibility
+          // For now, allow public and own profile only
+          if (!isOwnProfile && profileVisibility === 'friends') {
+            setCanViewProfile(false);
+            setLoading(false);
+            return;
+          }
+          
           setProfileUser({
             id: userDoc.id,
             ...userData,
@@ -48,8 +74,20 @@ export default function ProfilePage() {
           } as User);
         }
 
-        // Fetch user's flights via API
-        const flightsResponse = await fetch(`/api/flights?userId=${uid}&limit=20`);
+        // Fetch user's flights via API with auth token
+        const flightsHeaders: HeadersInit = {};
+        if (currentUser) {
+          try {
+            const token = await currentUser.getIdToken();
+            flightsHeaders['Authorization'] = `Bearer ${token}`;
+          } catch (error) {
+            console.log('No auth token available');
+          }
+        }
+        
+        const flightsResponse = await fetch(`/api/flights?userId=${uid}&limit=20`, {
+          headers: flightsHeaders
+        });
         if (flightsResponse.ok) {
           const flightsData = await flightsResponse.json();
           const flightData: Flight[] = flightsData.flights.map((flight: any) => ({
@@ -95,6 +133,20 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!canViewProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <UserIcon className="h-8 w-8 text-gray-400" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Private Profile</h1>
+          <p className="text-gray-400">This user's profile is private or only visible to friends.</p>
+        </div>
       </div>
     );
   }

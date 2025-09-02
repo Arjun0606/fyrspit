@@ -125,12 +125,35 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = searchParams.get('offset') || null;
     
+    // Get current user from auth header (optional)
+    const authHeader = request.headers.get('authorization') || '';
+    const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    let currentUserId = null;
+    
+    if (idToken) {
+      try {
+        const auth = getAuth();
+        const decoded = await auth.verifyIdToken(idToken);
+        currentUserId = decoded.uid;
+      } catch (error) {
+        // Invalid token, but allow public viewing
+        console.log('Invalid auth token, allowing public access');
+      }
+    }
+    
     let query = adminDb.collection('flights')
       .where('visibility', '==', 'public')
       .orderBy('createdAt', 'desc')
       .limit(limit);
     
     if (userId) {
+      // Check if current user can view this user's flights
+      const canView = await checkFlightViewPermission(userId, currentUserId);
+      
+      if (!canView) {
+        return NextResponse.json({ flights: [] }); // Return empty if no permission
+      }
+      
       query = adminDb.collection('flights')
         .where('userId', '==', userId)
         .orderBy('createdAt', 'desc')
@@ -160,4 +183,40 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Helper function to check if current user can view target user's flights
+async function checkFlightViewPermission(targetUserId: string, currentUserId: string | null): Promise<boolean> {
+  // If viewing own profile, always allow
+  if (currentUserId === targetUserId) {
+    return true;
+  }
+  
+  // Get target user's privacy settings
+  const targetUserDoc = await adminDb.collection('users').doc(targetUserId).get();
+  if (!targetUserDoc.exists) {
+    return false;
+  }
+  
+  const targetUser = targetUserDoc.data();
+  const flightVisibility = targetUser?.privacy?.flightVisibility || 'public';
+  
+  if (flightVisibility === 'public') {
+    return true;
+  }
+  
+  if (flightVisibility === 'private') {
+    return false; // Only target user can see
+  }
+  
+  if (flightVisibility === 'friends') {
+    if (!currentUserId) return false; // Must be logged in
+    
+    // Check if they are friends (this would need to be implemented)
+    // For now, return false until friend system is fully implemented
+    // TODO: Check friendship status
+    return false;
+  }
+  
+  return false;
 }

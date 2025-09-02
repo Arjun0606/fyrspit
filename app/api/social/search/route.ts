@@ -23,18 +23,26 @@ export async function GET(req: NextRequest) {
     );
 
     const usersSnapshot = await getDocs(usersQuery);
-    const users = usersSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        username: data.username,
-        profilePictureUrl: data.profilePictureUrl,
-        level: data.level || 1,
-        totalFlights: data.statsCache?.lifetime?.flights || 0,
-        totalMiles: data.statsCache?.lifetime?.milesMi || 0,
-        homeAirport: data.homeAirport
-      };
-    });
+    const users = usersSnapshot.docs
+      .map(doc => {
+        const data = doc.data();
+        // Only include users with public profiles in search results
+        const profileVisibility = data.privacy?.profileVisibility || 'public';
+        if (profileVisibility !== 'public') {
+          return null;
+        }
+        
+        return {
+          id: doc.id,
+          username: data.username,
+          profilePictureUrl: data.profilePictureUrl,
+          level: data.level || 1,
+          totalFlights: data.statsCache?.lifetime?.flights || 0,
+          totalMiles: data.statsCache?.lifetime?.milesMi || 0,
+          homeAirport: data.homeAirport
+        };
+      })
+      .filter(user => user !== null); // Remove null entries
 
     return NextResponse.json({ users });
   } catch (error) {
