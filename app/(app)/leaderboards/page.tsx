@@ -3,55 +3,47 @@
 import { useEffect, useState } from 'react';
 import { Trophy, Medal, Crown, Plane, MapPin, Clock, Star } from 'lucide-react';
 import Image from 'next/image';
-import { auth, db } from '@/lib/firebase';
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import Link from 'next/link';
+import { auth } from '@/lib/firebase';
 
 interface LeaderboardEntry {
   rank: number;
   userId: string;
   username: string;
-  profilePicture?: string;
+  profilePictureUrl?: string;
   value: number;
   change?: number; // +1, -1, 0 for rank change
   badges: string[];
   level: number;
+  profileVisibility?: 'public' | 'friends' | 'private';
 }
 
 export default function LeaderboardsPage() {
   const [activeTab, setActiveTab] = useState<'flights' | 'miles' | 'countries' | 'hours'>('flights');
-  const [entries, setEntries] = useState<{ flights: LeaderboardEntry[]; miles: LeaderboardEntry[]; countries: LeaderboardEntry[]; hours: LeaderboardEntry[] }>({ flights: [], miles: [], countries: [], hours: [] });
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-      const snap = await getDocs(query(collection(db, 'flights'), where('userId', '==', user.uid)));
-      const flights = snap.docs.map(d => d.data() as any);
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      const profile = userDoc.exists() ? (userDoc.data() as any) : {};
-      const username = (profile.username || user.email?.split('@')[0] || 'you').toString();
-      const profilePicture = profile.profilePictureUrl || undefined;
-      const flightsCount = flights.length;
-      const miles = flights.reduce((s, f: any) => s + (Number(f?.route?.distance) || 0), 0);
-      const hours = Math.round(flights.reduce((s, f: any) => s + ((Number((f as any)?.route?.duration) || 0) / 60), 0));
-      const countries = new Set<string>();
-      flights.forEach((f: any) => { if (f?.route?.from?.country) countries.add(f.route.from.country); if (f?.route?.to?.country) countries.add(f.route.to.country); });
-
-      const base: LeaderboardEntry = { rank: 1, userId: user.uid, username, profilePicture, value: 0, badges: [], level: profile?.level || 1 };
-      setEntries({
-        flights: [{ ...base, value: flightsCount }],
-        miles: [{ ...base, value: miles }],
-        countries: [{ ...base, value: countries.size }],
-        hours: [{ ...base, value: hours }],
-      });
+    const loadLeaderboard = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/leaderboards?category=${activeTab}&limit=100`);
+        if (response.ok) {
+          const data = await response.json();
+          setLeaderboard(data.leaderboard || []);
+        }
+      } catch (error) {
+        console.error('Error loading leaderboard:', error);
+        setLeaderboard([]);
+      } finally {
+        setLoading(false);
+      }
     };
-    load();
-  }, []);
 
-  // No dummy data: show empty state until real leaderboards are implemented
-  const leaderboards = entries;
+    loadLeaderboard();
+  }, [activeTab]);
 
-  const currentLeaderboard = leaderboards[activeTab] || [];
+  const currentLeaderboard = leaderboard || [];
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -130,20 +122,26 @@ export default function LeaderboardsPage() {
         </div>
 
         {/* Top 3 Podium */}
-        {currentLeaderboard.length > 0 && (
+        {!loading && currentLeaderboard.length > 0 && (
           <div className="grid grid-cols-3 gap-4 mb-8 max-w-4xl mx-auto">
             {currentLeaderboard.slice(0, 3).map((actualEntry, index) => (
               <div key={actualEntry.userId} className={`text-center ${index === 1 ? 'order-1' : index === 0 ? 'order-2' : 'order-3'}`}>
                 <div className={`card ${index === 1 ? 'bg-gradient-to-b from-yellow-900/30 to-gray-800/50 border-yellow-500/30' : ''}`}>
                   <div className="mb-4">{getRankIcon(actualEntry.rank || index + 1)}</div>
-                  {actualEntry.profilePicture ? (
-                    <img src={actualEntry.profilePicture} alt={actualEntry.username} className="w-16 h-16 rounded-full object-cover mx-auto mb-3" />
+                  {actualEntry.profilePictureUrl ? (
+                    <img src={actualEntry.profilePictureUrl} alt={actualEntry.username} className="w-16 h-16 rounded-full object-cover mx-auto mb-3" />
                   ) : (
                     <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
                       <span className="text-white text-xl font-semibold">{actualEntry.username.charAt(0).toUpperCase()}</span>
                     </div>
                   )}
-                  <h3 className="text-white font-semibold mb-1">@{actualEntry.username}</h3>
+                  {actualEntry.profileVisibility === 'public' ? (
+                    <Link href={`/profile/${actualEntry.userId}`}>
+                      <h3 className="text-white font-semibold mb-1 hover:text-orange-400 transition-colors cursor-pointer">@{actualEntry.username}</h3>
+                    </Link>
+                  ) : (
+                    <h3 className="text-white font-semibold mb-1">@{actualEntry.username}</h3>
+                  )}
                   <div className="text-2xl font-bold text-orange-400 mb-1">{formatValue(actualEntry.value, activeTab)}</div>
                   <div className="text-sm text-gray-400">{getValueLabel(activeTab)}</div>
                   <div className="mt-3 flex items-center justify-center space-x-2">
@@ -160,7 +158,9 @@ export default function LeaderboardsPage() {
         <div className="card">
           <h2 className="text-xl font-semibold text-white mb-6">Full Rankings</h2>
           
-          {currentLeaderboard.length === 0 ? (
+          {loading ? (
+            <div className="text-gray-400 text-center py-8">Loading leaderboard...</div>
+          ) : currentLeaderboard.length === 0 ? (
             <div className="text-gray-400">No rankings yet. Log real flights to appear here.</div>
           ) : (
           <div className="space-y-3">
@@ -176,8 +176,8 @@ export default function LeaderboardsPage() {
                     {getRankIcon(entry.rank)}
                   </div>
                   
-                  {entry.profilePicture ? (
-                    <img src={entry.profilePicture} alt={entry.username} className="w-10 h-10 rounded-full object-cover" />
+                  {entry.profilePictureUrl ? (
+                    <img src={entry.profilePictureUrl} alt={entry.username} className="w-10 h-10 rounded-full object-cover" />
                   ) : (
                     <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
                       <span className="text-white font-semibold">
@@ -187,7 +187,13 @@ export default function LeaderboardsPage() {
                   )}
                   
                   <div>
-                    <div className="text-white font-semibold">@{entry.username}</div>
+                    {entry.profileVisibility === 'public' ? (
+                      <Link href={`/profile/${entry.userId}`}>
+                        <div className="text-white font-semibold hover:text-orange-400 transition-colors cursor-pointer">@{entry.username}</div>
+                      </Link>
+                    ) : (
+                      <div className="text-white font-semibold">@{entry.username}</div>
+                    )}
                     <div className="text-sm text-gray-400">Level {entry.level}</div>
                   </div>
                 </div>
@@ -211,7 +217,7 @@ export default function LeaderboardsPage() {
         </div>
 
         {/* No fake 'Your Rank' until we have real data */}
-        {currentLeaderboard.length === 0 && (
+        {!loading && currentLeaderboard.length === 0 && (
           <div className="mt-8 card">
             <div className="flex items-center space-x-4">
               <Trophy className="h-6 w-6 text-orange-500" />

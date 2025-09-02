@@ -22,6 +22,7 @@ interface PopularUser {
   totalFlights: number;
   level: number;
   badges: string[];
+  profileVisibility?: 'public' | 'friends' | 'private';
 }
 
 interface FeaturedAirport {
@@ -86,19 +87,52 @@ export default function ExplorePage() {
       }
       setAircrafts(Array.from(aircraftMap.entries()).map(([type, v]) => ({ type, flights: v.flights, airlines: Array.from(v.airlines) })));
 
-      // Top aviators (just the current user for now)
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      const profile = userDoc.exists() ? (userDoc.data() as any) : {};
-      setUsers([
-        {
-          id: user.uid,
-          username: (profile.username || user.email?.split('@')[0] || 'you').toString(),
-          profilePicture: profile.profilePictureUrl || undefined,
-          totalFlights: flights.length,
-          level: profile?.level || 1,
-          badges: [],
-        },
-      ]);
+      // Load top aviators from leaderboard API
+      try {
+        const leaderboardResponse = await fetch('/api/leaderboards?category=flights&limit=10');
+        if (leaderboardResponse.ok) {
+          const leaderboardData = await leaderboardResponse.json();
+          const topAviators = leaderboardData.leaderboard.map((entry: any) => ({
+            id: entry.userId,
+            username: entry.username,
+            profilePicture: entry.profilePictureUrl,
+            totalFlights: entry.value,
+            level: entry.level,
+            badges: entry.badges || [],
+            profileVisibility: entry.profileVisibility || 'public',
+          }));
+          setUsers(topAviators);
+        } else {
+          // Fallback to current user only
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const profile = userDoc.exists() ? (userDoc.data() as any) : {};
+          setUsers([
+            {
+              id: user.uid,
+              username: (profile.username || user.email?.split('@')[0] || 'you').toString(),
+              profilePicture: profile.profilePictureUrl || undefined,
+              totalFlights: flights.length,
+              level: profile?.level || 1,
+              badges: [],
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error('Error loading top aviators:', error);
+        // Fallback to current user only
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const profile = userDoc.exists() ? (userDoc.data() as any) : {};
+        setUsers([
+          {
+            id: user.uid,
+            username: (profile.username || user.email?.split('@')[0] || 'you').toString(),
+            profilePicture: profile.profilePictureUrl || undefined,
+            totalFlights: flights.length,
+            level: profile?.level || 1,
+            badges: [],
+          },
+        ]);
+      }
     };
     load();
   }, []);
@@ -254,7 +288,13 @@ export default function ExplorePage() {
                         </div>
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-white">@{user.username}</h3>
+                        {user.profileVisibility === 'public' ? (
+                          <Link href={`/profile/${user.id}`}>
+                            <h3 className="text-lg font-semibold text-white hover:text-orange-400 transition-colors cursor-pointer">@{user.username}</h3>
+                          </Link>
+                        ) : (
+                          <h3 className="text-lg font-semibold text-white">@{user.username}</h3>
+                        )}
                         <div className="text-sm text-gray-400">{user.totalFlights} flights</div>
                         <div className="text-sm text-orange-400">Level {user.level}</div>
                       </div>
