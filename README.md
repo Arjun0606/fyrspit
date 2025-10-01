@@ -1,4 +1,4 @@
-# ✈️ Fyrspit - The Social Diary for Flying
+# ✈️ Fyrspit - The Social Diary for Flying  https://fyrspit.com/
 
 > Log flights. Tell your story. Discover the culture of flying.
 
